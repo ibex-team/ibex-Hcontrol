@@ -2,21 +2,23 @@
 # First example: compiling a library that depends on libibex
 ################################################################################
 # source files of libibex-Hcontrol
-list (APPEND SRC ${CMAKE_CURRENT_SOURCE_DIR}/strategy/ibex_LightLocalSolver.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/strategy/ibex_LightLocalSolver.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}/strategy/ibex_LightOptimMinMax.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/strategy/ibex_LightOptimMinMax.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}/strategy/ibex_OptimMinMax.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/strategy/ibex_OptimMinMax.h
+list (APPEND SRC strategy/ibex_LightLocalSolver.cpp
+                 strategy/ibex_LightLocalSolver.h
+                 strategy/ibex_LightOptimMinMax.cpp
+                 strategy/ibex_LightOptimMinMax.h
+                 strategy/ibex_OptimMinMax.cpp
+                 strategy/ibex_OptimMinMax.h
+                 strategy/ibex_OptimData.cpp
+                 strategy/ibex_OptimData.h
                  # Add more source files here.
                  # For most plugins, the rest can be left as is.
                  )
 
-# Create the target for libibex-myplugin
-add_library (ibex-Hcontrol ${SRC})
+# Create the target for libibex-Hcontrol
+add_library (ibex-Hcontrol SHARED ${SRC})
 target_include_directories (ibex-Hcontrol PUBLIC
-                            "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
-                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
+                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/strategy>
+                            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries (ibex-Hcontrol PUBLIC Ibex::ibex)
 
 # installation of libibex-Hcontrol files

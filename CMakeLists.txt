@@ -1,8 +1,8 @@
 cmake_minimum_required (VERSION 3.5.1)
 
-project (IBEX_MYPLUGIN VERSION 0.42 LANGUAGES CXX)
-set (IBEX_MYPLUGIN_DESCRIPTION "H_infinity Control synthesis using global optimization")
-set (IBEX_MYPLUGIN_URL "https://github.com/ibex-team/ibex-Hcontrol/")
+project (IBEX_HCONTROL VERSION 0.42 LANGUAGES CXX)
+set (IBEX_HCONTROL_DESCRIPTION "H_infinity Control synthesis using global optimization")
+set (IBEX_HCONTROL_URL "https://github.com/ibex-team/ibex-Hcontrol/")
 set (IBEX_MIN_VERSION_REQ 2.8.9.1)
 
 # If IBEX_DIR was given on the command-line and not in the environment, set it
@@ -26,6 +26,9 @@ else ()
   message (STATUS "Ibex was compiled without any Linear Programming library")
 endif ()
 
+find_package (IBEX_AFFINE REQUIRED)
+message (STATUS "Found Ibex-affine")
+
 ################################################################################
 # Generate pkg-config file and install it (can be removed if no library is
 # installed)
@@ -42,7 +45,7 @@ add_subdirectory (src)
 ################################################################################
 # Generate CMake config file (can be removed if no library is installed)
 ################################################################################
-set (IBEX_MYPLUGIN_TARGETS_CONFIG_FILE "ibex_myplugin-targets.cmake")
+set (IBEX_HCONTROL_TARGETS_CONFIG_FILE "ibex_hcontrol-targets.cmake")
 install (EXPORT HcontrolExport FILE ${IBEX_HCONTROL_TARGETS_CONFIG_FILE}
                                 NAMESPACE Ibex::
                                 DESTINATION ${CMAKE_INSTALL_CONFIGCMAKE})

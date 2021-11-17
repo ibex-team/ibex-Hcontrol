@@ -23,6 +23,7 @@ namespace ibex {
 
 
 //******** messine GOW conf*********
+//    https://doi.org/10.1007/s10898-021-01010-5
 void TestOptimMinMax::ex_messine() {
 
 	double x_prec = 1e-6;
