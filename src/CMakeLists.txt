@@ -2,17 +2,13 @@
 # First example: compiling a library that depends on libibex
 ################################################################################
 # source files of libibex-Hcontrol
-list (APPEND SRC strategy/ibex_LightLocalSolver.cpp
-                 strategy/ibex_LightLocalSolver.h
-                 strategy/ibex_LightOptimMinMax.cpp
-                 strategy/ibex_LightOptimMinMax.h
-                 strategy/ibex_OptimMinMax.cpp
-                 strategy/ibex_OptimMinMax.h
-                 strategy/ibex_OptimData.cpp
-                 strategy/ibex_OptimData.h
-                 # Add more source files here.
-                 # For most plugins, the rest can be left as is.
-                 )
+list (APPEND SRC strategy/ibex_EvalMax.cpp
+        strategy/ibex_EvalMax.h
+        strategy/ibex_BxpMinMax.cpp
+        strategy/ibex_BxpMinMax.h
+        # Add more source files here.
+        # For most plugins, the rest can be left as is.
+        )
 
 # Create the target for libibex-Hcontrol
 add_library (ibex-Hcontrol SHARED ${SRC})
