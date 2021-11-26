@@ -12,6 +12,8 @@ feasible_point::feasible_point(const feasible_point& pt) = default;
 feasible_point::~feasible_point() = default;
 
 const long BxpMinMax::id = next_id();
+const long BxpMinMaxOpti::id = next_id();
+const long BxpMinMaxCsp::id = next_id();
 
 BxpMinMax::BxpMinMax() : Bxp(id),
                          y_heap(new DoubleHeap<Cell>(y_heap_costf1, false, y_heap_costf2, false)),
@@ -63,7 +65,7 @@ std::pair<Bxp*, Bxp*> BxpMinMax::down() {
     return {new BxpMinMax(*this), new BxpMinMax(*this)};
 }
 
-BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(e.id), y_heap(e.y_heap), nb_bisect(e.nb_bisect), pu(e.pu) {
+BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(BxpMinMax::id), y_heap(e.y_heap), nb_bisect(e.nb_bisect), pu(e.pu) {
 
 }
 
@@ -75,16 +77,30 @@ BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(e.id), y_heap(e.y_heap), nb_bisec
 //        return BxpMinMaxCsp::id;
 //}
 
+/* Cost functions for DataMinMax class */
     double CellCostFmaxlb::cost(const Cell& elem) const {
         auto pBxp = dynamic_cast<const BxpMinMax*>(elem.prop[BxpMinMax::id]);
         if (pBxp)
             return pBxp->fmax.lb();
         else
-            ibex_error("ibex_BxpMinMax -- null ptr in CellCostFmaxlb: cell element has no BxpMinMax.");
+            ibex_error("[ibex_BxpMinMax] null ptr in CellCostFmaxlb: cell properties have no BxpMinMax.");
+
+//        auto pBxp_opt = dynamic_cast<const BxpMinMaxOpti*>(elem.prop[BxpMinMaxOpti::id]);
+//        if (pBxp_opt)
+//            return pBxp_opt->fmax.lb();
+//        auto pBxp_csp = dynamic_cast<const BxpMinMaxCsp*>(elem.prop[BxpMinMaxCsp::id]);
+//        if (pBxp_csp)
+//            return pBxp_csp->fmax.lb();
+//        else
+//            ibex_error("[ibex_BxpMinMax] null ptr in CellCostFmaxlb: cell properties have no BxpMinMax.");
 }
 
-    void CellCostFmaxlb::set_optim_data(Cell& c) {
+    void CellCostFmaxlb::set_minmax_data(Cell& c) {
         c.prop.add(new BxpMinMax());
+    }
+
+    void CellCostFmaxlb::add_property(BoxProperties &map) {
+        // TODO
     }
 
     double CellCostmaxFmaxub::cost(const Cell& elem) const {
@@ -92,24 +108,132 @@ BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(e.id), y_heap(e.y_heap), nb_bisec
         if (pBxp)
             return -pBxp->fmax.ub();
         else
-            ibex_error("ibex_BxpMinMax -- null ptr in CellCostmaxFmaxub: cell element has no BxpMinMax.");
+            ibex_error("[ibex_BxpMinMax] -- null ptr in CellCostmaxFmaxub: cell element has no BxpMinMax.");
     }
 
-    void CellCostmaxFmaxub::set_optim_data(Cell &c) {
+    void CellCostmaxFmaxub::set_minmax_data(Cell &c) {
         c.prop.add(new BxpMinMax());
     }
 
+    void CellCostmaxFmaxub::add_property(BoxProperties &map) {
+        // TODO
+    }
 
     double CellCostFmaxub::cost(const Cell& elem) const {
         auto pBxp = dynamic_cast<const BxpMinMax*>(elem.prop[BxpMinMax::id]);
         if (pBxp)
             return pBxp->fmax.ub();
         else
-            ibex_error("ibex_BxpMinMax -- null ptr in CellCostFmaxub: cell element has no BxpMinMax.");
+            ibex_error("[ibex_BxpMinMax] -- null ptr in CellCostFmaxub: cell element has no BxpMinMax.");
     }
 
-    void CellCostFmaxub::set_optim_data(Cell &c) {
+    void CellCostFmaxub::set_minmax_data(Cell &c) {
         c.prop.add(new BxpMinMax());
     }
+
+    void CellCostFmaxub::add_property(BoxProperties &map) {
+        // TODO
+    }
+
+
+    /* Cost functions for DataMinMaxOpti class */
+    double CellCostFmaxlb_opt::cost(const Cell& elem) const {
+        auto pBxp = dynamic_cast<const BxpMinMaxOpti*>(elem.prop[BxpMinMaxOpti::id]);
+        if (pBxp)
+            return pBxp->fmax.lb();
+        else
+            ibex_error("[ibex_BxpMinMax] null ptr in CellCostFmaxlb_opt: cell properties have no BxpMinMaxOpti.");
+}
+
+    void CellCostFmaxlb_opt::set_minmax_data(Cell& c) {
+        c.prop.add(new BxpMinMaxOpti());
+    }
+
+    void CellCostFmaxlb_opt::add_property(BoxProperties &map) {
+        // TODO
+    }
+
+    double CellCostmaxFmaxub_opt::cost(const Cell& elem) const {
+        auto pBxp = dynamic_cast<const BxpMinMaxOpti*>(elem.prop[BxpMinMaxOpti::id]);
+        if (pBxp)
+            return -pBxp->fmax.ub();
+        else
+            ibex_error("[ibex_BxpMinMax] -- null ptr in CellCostmaxFmaxub_opt: cell element has no BxpMinMaxOpti.");
+    }
+
+    void CellCostmaxFmaxub_opt::set_minmax_data(Cell &c) {
+        c.prop.add(new BxpMinMaxOpti());
+    }
+
+    void CellCostmaxFmaxub_opt::add_property(BoxProperties &map) {
+        // TODO
+    }
+
+    double CellCostFmaxub_opt::cost(const Cell& elem) const {
+        auto pBxp = dynamic_cast<const BxpMinMaxOpti*>(elem.prop[BxpMinMaxOpti::id]);
+        if (pBxp)
+            return pBxp->fmax.ub();
+        else
+            ibex_error("[ibex_BxpMinMax] -- null ptr in CellCostFmaxub_opt: cell element has no BxpMinMaxOpti.");
+    }
+
+    void CellCostFmaxub_opt::set_minmax_data(Cell &c) {
+        c.prop.add(new BxpMinMaxOpti());
+    }
+
+    void CellCostFmaxub_opt::add_property(BoxProperties &map) {
+        // TODO
+    }
+
+
+    /* Cost functions for DataMinMaxCsp class */
+    double CellCostFmaxlb_csp::cost(const Cell& elem) const {
+        auto pBxp = dynamic_cast<const BxpMinMaxCsp*>(elem.prop[BxpMinMaxCsp::id]);
+        if (pBxp)
+            return pBxp->fmax.lb();
+        else
+            ibex_error("[ibex_BxpMinMax] null ptr in CellCostFmaxlb_csp: cell properties have no_csp BxpMinMaxCsp.");
+    }
+
+    void CellCostFmaxlb_csp::set_minmax_data(Cell& c) {
+        c.prop.add(new BxpMinMaxCsp());
+    }
+
+    void CellCostFmaxlb_csp::add_property(BoxProperties &map) {
+        // TODO
+    }
+
+    double CellCostmaxFmaxub_csp::cost(const Cell& elem) const {
+        auto pBxp = dynamic_cast<const BxpMinMaxCsp*>(elem.prop[BxpMinMaxCsp::id]);
+        if (pBxp)
+            return -pBxp->fmax.ub();
+        else
+            ibex_error("[ibex_BxpMinMax] -- null ptr in CellCostmaxFmaxub_csp: cell element has no BxpMinMaxCsp.");
+    }
+
+    void CellCostmaxFmaxub_csp::set_minmax_data(Cell &c) {
+        c.prop.add(new BxpMinMaxCsp());
+    }
+
+    void CellCostmaxFmaxub_csp::add_property(BoxProperties &map) {
+        // TODO
+    }
+
+    double CellCostFmaxub_csp::cost(const Cell& elem) const {
+        auto pBxp = dynamic_cast<const BxpMinMaxCsp*>(elem.prop[BxpMinMaxCsp::id]);
+        if (pBxp)
+            return pBxp->fmax.ub();
+        else
+            ibex_error("[ibex_BxpMinMax] -- null ptr in CellCostFmaxub_csp: cell element has no BxpMinMaxCsp.");
+    }
+
+    void CellCostFmaxub_csp::set_minmax_data(Cell &c) {
+        c.prop.add(new BxpMinMaxCsp());
+    }
+
+    void CellCostFmaxub_csp::add_property(BoxProperties &map) {
+        // TODO
+    }
+
 
 } // end namespace ibex

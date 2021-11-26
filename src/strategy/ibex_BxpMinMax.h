@@ -86,7 +86,6 @@ namespace ibex {
         static CellCostPFlb y_heap_costf2;
 
         static const long id;
-//        long get_id();
 
         /**
          * \brief Casado criterion
@@ -116,6 +115,7 @@ namespace ibex {
     class BxpMinMaxOpti : public BxpMinMax {
     public:
         BxpMinMaxOpti() : BxpMinMax() {}
+        static const long id;
 
     protected:
         Bxp* copy() const {return new BxpMinMaxOpti(*this);};
@@ -124,6 +124,7 @@ namespace ibex {
     class BxpMinMaxCsp : public BxpMinMax {
     public:
         BxpMinMaxCsp() : BxpMinMax() {}
+        static const long id;
 
     protected:
         Bxp* copy() const {return new BxpMinMaxCsp(*this);};
@@ -143,7 +144,7 @@ namespace ibex {
     }
 
 
-/* Cost function definition for DataMinMaxOpti class */
+/* Cost function definition for DataMinMax class */
 
     class CellCostFmaxlb : public CostFunc<Cell> { // element are sorted from the lowest lb of the evaluation of the objective function to the greatest
     public:
@@ -162,7 +163,7 @@ namespace ibex {
          *
          * Does nothing by default.
          */
-//        void add_property(BoxProperties& map);
+        void add_property(BoxProperties& map);
 
         /**
          * \brief Set data in OptimData in the cell
@@ -173,7 +174,7 @@ namespace ibex {
          *
          * Does nothing (by default).
          */
-        static void set_optim_data(Cell& c);
+        static void set_minmax_data(Cell& c);
 
     };
 
@@ -188,6 +189,15 @@ namespace ibex {
         double cost(const Cell& elem) const override;
 
         /**
+         * \brief Add backtrackable data required by this cost function
+         *
+         * This function is called for the root cell (before a strategy is executed).
+         *
+         * Does nothing by default.
+         */
+        void add_property(BoxProperties& map);
+
+        /**
          * \brief Set data in OptimData in the cell
          *
          * This function is called right after "contract_and_bound" in the Optimizer.
@@ -196,7 +206,7 @@ namespace ibex {
          *
          * Does nothing (by default).
          */
-        static void set_optim_data(Cell& c);
+        static void set_minmax_data(Cell& c);
 
     };
 
@@ -211,6 +221,15 @@ namespace ibex {
         double cost(const Cell& elem) const override;
 
         /**
+         * \brief Add backtrackable data required by this cost function
+         *
+         * This function is called for the root cell (before a strategy is executed).
+         *
+         * Does nothing by default.
+         */
+        void add_property(BoxProperties& map);
+
+        /**
          * \brief Set data in OptimData in the cell
          *
          * This function is called right after "contract_and_bound" in the Optimizer.
@@ -219,11 +238,207 @@ namespace ibex {
          *
          * Does nothing (by default).
          */
-        static void set_optim_data(Cell& c);
+        static void set_minmax_data(Cell& c);
 
     };
 
 
+/* Cost function definition for DataMinMaxOpti class */
+
+    class CellCostFmaxlb_opt : public CostFunc<Cell> { // element are sorted from the lowest lb of the evaluation of the objective function to the greatest
+    public:
+
+        CellCostFmaxlb_opt();
+
+        /**
+         * \brief Return the cost associated to the cell
+         */
+        double cost(const Cell& elem) const override;
+
+        /**
+         * \brief Add backtrackable data required by this cost function
+         *
+         * This function is called for the root cell (before a strategy is executed).
+         *
+         * Does nothing by default.
+         */
+        void add_property(BoxProperties& map);
+
+        /**
+         * \brief Set data in OptimData in the cell
+         *
+         * This function is called right after "contract_and_bound" in the Optimizer.
+         *
+         * The data required depends on the cost function.
+         *
+         * Does nothing (by default).
+         */
+        static void set_minmax_data(Cell& c);
+
+    };
+
+    class CellCostmaxFmaxub_opt : public CostFunc<Cell> { // element are sorted from the lowest lb of the evaluation of the objective function to the greatest
+    public:
+
+        CellCostmaxFmaxub_opt();
+
+        /**
+         * \brief Return the cost associated to the cell
+         */
+        double cost(const Cell& elem) const override;
+
+        /**
+         * \brief Add backtrackable data required by this cost function
+         *
+         * This function is called for the root cell (before a strategy is executed).
+         *
+         * Does nothing by default.
+         */
+        void add_property(BoxProperties& map);
+
+        /**
+         * \brief Set data in OptimData in the cell
+         *
+         * This function is called right after "contract_and_bound" in the Optimizer.
+         *
+         * The data required depends on the cost function.
+         *
+         * Does nothing (by default).
+         */
+        static void set_minmax_data(Cell& c);
+
+    };
+
+    class CellCostFmaxub_opt : public CostFunc<Cell> { // element are sorted from the lowest lb of the evaluation of the objective function to the greatest
+    public:
+
+        CellCostFmaxub_opt();
+
+        /**
+         * \brief Return the cost associated to the cell
+         */
+        double cost(const Cell& elem) const override;
+
+        /**
+         * \brief Add backtrackable data required by this cost function
+         *
+         * This function is called for the root cell (before a strategy is executed).
+         *
+         * Does nothing by default.
+         */
+        void add_property(BoxProperties& map);
+
+        /**
+         * \brief Set data in OptimData in the cell
+         *
+         * This function is called right after "contract_and_bound" in the Optimizer.
+         *
+         * The data required depends on the cost function.
+         *
+         * Does nothing (by default).
+         */
+        static void set_minmax_data(Cell& c);
+
+    };
+
+
+/* Cost function definition for DataMinMaxCsp class */
+
+    class CellCostFmaxlb_csp : public CostFunc<Cell> { // element are sorted from the lowest lb of the evaluation of the objective function to the greatest
+    public:
+
+        CellCostFmaxlb_csp();
+
+        /**
+         * \brief Return the cost associated to the cell
+         */
+        double cost(const Cell& elem) const override;
+
+        /**
+         * \brief Add backtrackable data required by this cost function
+         *
+         * This function is called for the root cell (before a strategy is executed).
+         *
+         * Does nothing by default.
+         */
+        void add_property(BoxProperties& map);
+
+        /**
+         * \brief Set data in OptimData in the cell
+         *
+         * This function is called right after "contract_and_bound" in the Optimizer.
+         *
+         * The data required depends on the cost function.
+         *
+         * Does nothing (by default).
+         */
+        static void set_minmax_data(Cell& c);
+
+    };
+
+    class CellCostmaxFmaxub_csp : public CostFunc<Cell> { // element are sorted from the lowest lb of the evaluation of the objective function to the greatest
+    public:
+
+        CellCostmaxFmaxub_csp();
+
+        /**
+         * \brief Return the cost associated to the cell
+         */
+        double cost(const Cell& elem) const override;
+
+        /**
+         * \brief Add backtrackable data required by this cost function
+         *
+         * This function is called for the root cell (before a strategy is executed).
+         *
+         * Does nothing by default.
+         */
+        void add_property(BoxProperties& map);
+
+        /**
+         * \brief Set data in OptimData in the cell
+         *
+         * This function is called right after "contract_and_bound" in the Optimizer.
+         *
+         * The data required depends on the cost function.
+         *
+         * Does nothing (by default).
+         */
+        static void set_minmax_data(Cell& c);
+
+    };
+
+    class CellCostFmaxub_csp : public CostFunc<Cell> { // element are sorted from the lowest lb of the evaluation of the objective function to the greatest
+    public:
+
+        CellCostFmaxub_csp();
+
+        /**
+         * \brief Return the cost associated to the cell
+         */
+        double cost(const Cell& elem) const override;
+
+        /**
+         * \brief Add backtrackable data required by this cost function
+         *
+         * This function is called for the root cell (before a strategy is executed).
+         *
+         * Does nothing by default.
+         */
+        void add_property(BoxProperties& map);
+
+        /**
+         * \brief Set data in OptimData in the cell
+         *
+         * This function is called right after "contract_and_bound" in the Optimizer.
+         *
+         * The data required depends on the cost function.
+         *
+         * Does nothing (by default).
+         */
+        static void set_minmax_data(Cell& c);
+
+    };
 
 } // end namespace ibex
 
