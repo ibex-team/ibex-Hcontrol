@@ -53,7 +53,7 @@ namespace ibex {
          *         -is_midp: true if optimize run with x midpoint eval, false else
          * */
         Interval eval(IntervalVector& X);
-        Interval eval(IntervalVector& X, BoxProperties& prop);
+        Interval eval(IntervalVector& X, BoxProperties& prop, double loup); // TODO without loup argument?
 //        bool eval(Cell* x_cell, double loup);
 
         /**
