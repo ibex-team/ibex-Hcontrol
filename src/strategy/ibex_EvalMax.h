@@ -83,7 +83,6 @@ namespace ibex {
         //double abs_min_prec; // absolute minimum prec bisection on y
         Bsc* bsc; // bisector
         std::vector<Cell*> heap_save;
-//        Interval eval_all(Function* f,const IntervalVector& box);
         bool found_point;
         double time;
         bool csp_actif;
@@ -96,56 +95,63 @@ namespace ibex {
          * */
 //    void contract_best_max_cst( Ctc* max_ctc,IntervalVector* xy_box,IntervalVector* xy_box_ctc,y_heap_elem* elem);
 
-        /* return true if the stop criterion is reached
-         */
-
-//        bool stop_crit_reached(int current_iter,DoubleHeap<Cell> * y_heap,const Interval& fmax);
 
 
-        /* return a feasible point in y_box w.r.t constraints on xy
-         *  */
-//        IntervalVector get_feasible_point(Cell* x_cell, Cell * const y_cell);
-
-        /* return 0 if box is non feasible w.r.t constraints on xy, 1 if not known, 2 if box is entierly feasible
-         * */
-//        int check_constraints(const IntervalVector& xy_box);
-
-//        bool handle_cstfree(IntervalVector& xy_box,Cell * const y_cell);
-
-//        bool handle_cell( Cell* x_cell,Cell* const y_cell,double loup,bool no_stack = false);
+        bool handle_cell(Cell* x_cell, Cell* y_cell, double loup, bool no_stack = false);
         // no stack needed for visit all leaves.
 
-//        bool handle_constraint(OptimData  *data_y, IntervalVector& xy_box,IntervalVector& y_box);
-
-        /* run local search algorithm for a particular x and maximizes over y to provide y_max a local maximum. Objectif function is then evaluate at (xbox,max_y) to try to provide a better lower bound.
-         * Inputs: x_box: current x box, xy_box: box after contraction w.r.t contraction, loup: current lower upper.
-         */
-
-//        double local_search_process(const IntervalVector& x_box,const IntervalVector & xy_box,double loup);
-
-        /* returns a box composed of x_box(not modified) and the middle of y_box, needed for midpoint evaluation
-         * Inputs: -xy_box: whole box
-         *         -y_box: y box to get the middle
-         */
-//        IntervalVector get_mid_y(const IntervalVector& x_box,const IntervalVector& y_box);
-
-        /* set y part of xy_box with y_box
-         * */
-//        IntervalVector init_xy_box(const IntervalVector& x_box,const IntervalVector & y_box);
-
-
-//        IntervalVector xy_box_hull(const IntervalVector& x_box);
-
-        /*
+        /**
          * Delete the elements in the save heap
          */
-//        void delete_save_heap();
+        void delete_save_heap();
+
+        IntervalVector xy_box_hull(const IntervalVector& x_box);
+
+        /**
+         * run local search algorithm for a particular x and maximizes over y to provide y_max a local maximum. Objectif function is then evaluate at (xbox,max_y) to try to provide a better lower bound.
+         * Inputs: x_box: current x box, xy_box: box after contraction w.r.t contraction, loup: current lower upper.
+         */
+        double local_search_process(const IntervalVector& x_box, const IntervalVector& xy_box, double loup);
+
+
+        /**
+         * return true if the stop criterion is reached
+         */
+        bool stop_crit_reached(int current_iter,DoubleHeap<Cell> * y_heap,const Interval& fmax) const;
 
 //        void set_y_sol(Vector& start_point);
 
-        /* add elements of Heap_save into y_heap
-         * */
-//        void fill_y_heap(DoubleHeap<Cell>& y_heap);
+        /**
+         * add elements of Heap_save into y_heap
+         */
+        void fill_y_heap(DoubleHeap<Cell>& y_heap);
+
+        /**
+         * set y part of xy_box with y_box
+         */
+        static IntervalVector init_xy_box(const IntervalVector& x_box, const IntervalVector& y_box);
+
+        bool handle_constraint(BxpMinMax *data_y, IntervalVector &xy_box, IntervalVector &y_box);
+        bool handle_cstfree(IntervalVector& xy_box, Cell * y_cell);
+
+        /**
+         * return a feasible point in y_box w.r.t constraints on xy
+         */
+        IntervalVector get_feasible_point(Cell* x_cell, Cell * y_cell);
+
+        static Interval eval_all(Function* f, const IntervalVector& box);
+
+        /**
+         * return 0 if box is non feasible w.r.t constraints on xy, 1 if not known, 2 if box is entierly feasible
+         */
+        int check_constraints(const IntervalVector& xy_box);
+
+        /**
+         * returns a box composed of x_box(not modified) and the middle of y_box, needed for midpoint evaluation
+         * Inputs: -xy_box: whole box
+         *         -y_box: y box to get the middle
+         */
+        static IntervalVector get_mid_y(const IntervalVector& x_box, const IntervalVector& y_box);
 
 
         /* Default timeout */
@@ -157,7 +163,7 @@ namespace ibex {
 
     };
 
-
+    void export_monitor(std::vector<double>* ub, std::vector<double>* lb, std::vector<double>* nbel, std::vector<double>* nbel_save, const IntervalVector& box);
 } // end namespace ibex
 
 #endif //IBEX_HCONTROL_IBEX_EVALMAX_H
