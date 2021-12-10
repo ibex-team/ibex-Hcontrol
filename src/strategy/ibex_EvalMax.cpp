@@ -34,11 +34,11 @@ namespace ibex {
         found_point  = false;
         BxpMinMax *data_x;
         Cell *x_cell = new Cell(X);
+        csp_actif = false; // TODO
 
-        if (csp_actif)
-            data_x = dynamic_cast<BxpMinMax *>(prop[BxpMinMaxCsp::id]);
-        else
-            data_x = dynamic_cast<BxpMinMax *>(prop[BxpMinMaxOpti::id]);
+        if (csp_actif) data_x = dynamic_cast<BxpMinMax *>(prop[BxpMinMaxCsp::id]);
+        else           data_x = dynamic_cast<BxpMinMaxOpti *>(prop[BxpMinMax::id]); // TODO BxpMinMaxOpti
+
 
         //std::cout <<"    DEB "<<data_x->fmax <<std::endl;
 //                cout<<endl<<"*************************"<<endl;
@@ -101,7 +101,7 @@ namespace ibex {
 
                 found_point  = false;
 
-                Cell * y_cell = y_heap->pop(); // we extract an element with critprob probability to take it according to the first crit
+                Cell* y_cell = y_heap->pop(); // we extract an element with critprob probability to take it according to the first crit
                 current_iter++;
 //                                                std::cout<<"current_iter: "<<current_iter<<std::endl;
                 if ((list_elem_max != 0 && ((y_heap->size() + heap_save.size())>list_elem_max)) || (y_cell->box.size())<prec_y) { // continue to evaluate cells of y_heap without increasing size of list, need to do it else nothing happend if list already reached max size

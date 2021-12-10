@@ -32,7 +32,7 @@ namespace ibex {
         /**
          * \brief Constructor for the root node (followed by a call to init_root)
          */
-        BxpMinMax();
+        explicit BxpMinMax(ExtendedSystem& sys);
 
         /**
          * \brief Delete *this
@@ -82,8 +82,8 @@ namespace ibex {
         /**
          * Cost function of the heap to store the element of the light solver
          */
-        static CellCostMaxPFub y_heap_costf1;
-        static CellCostPFlb y_heap_costf2;
+        CellCostMaxPFub y_heap_costf1;
+        CellCostPFlb y_heap_costf2;
 
         static const long id;
 
@@ -114,7 +114,7 @@ namespace ibex {
 
     class BxpMinMaxOpti : public BxpMinMax {
     public:
-        BxpMinMaxOpti() : BxpMinMax() {}
+        explicit BxpMinMaxOpti(ExtendedSystem& sys) : BxpMinMax(sys) {}
         static const long id;
 
     protected:
@@ -123,7 +123,7 @@ namespace ibex {
 
     class BxpMinMaxCsp : public BxpMinMax {
     public:
-        BxpMinMaxCsp() : BxpMinMax() {}
+        explicit BxpMinMaxCsp(ExtendedSystem& sys) : BxpMinMax(sys) {}
         static const long id;
 
     protected:

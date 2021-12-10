@@ -15,9 +15,9 @@ const long BxpMinMax::id = next_id();
 const long BxpMinMaxOpti::id = next_id();
 const long BxpMinMaxCsp::id = next_id();
 
-BxpMinMax::BxpMinMax() : Bxp(id),
-                         y_heap(new DoubleHeap<Cell>(y_heap_costf1, false, y_heap_costf2, false)),
-                         nb_bisect(0), pu(0) {
+BxpMinMax::BxpMinMax(ExtendedSystem& sys) : Bxp(id),
+                                    y_heap(new DoubleHeap<Cell>(y_heap_costf1, false, y_heap_costf2, false)),
+                                    nb_bisect(0), y_heap_costf1(sys), y_heap_costf2(sys), pu(0) {
 
 }
 
@@ -29,7 +29,7 @@ BxpMinMax::~BxpMinMax() {
         delete y_heap;
     }
 //    std::cout<<"yheap flushed, delete best sol..."<<std::endl;
-    delete best_sol;
+//    delete best_sol; // TODO
 }
 
 
@@ -65,7 +65,8 @@ std::pair<Bxp*, Bxp*> BxpMinMax::down() {
     return {new BxpMinMax(*this), new BxpMinMax(*this)};
 }
 
-BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(BxpMinMax::id), y_heap(e.y_heap), nb_bisect(e.nb_bisect), pu(e.pu) {
+BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(BxpMinMax::id), y_heap(e.y_heap), nb_bisect(e.nb_bisect),
+                                           y_heap_costf1(e.y_heap_costf1), y_heap_costf2(e.y_heap_costf2), pu(e.pu) {
 
 }
 
@@ -96,7 +97,7 @@ BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(BxpMinMax::id), y_heap(e.y_heap),
 }
 
     void CellCostFmaxlb::set_minmax_data(Cell& c) {
-        c.prop.add(new BxpMinMax());
+//        c.prop.add(new BxpMinMax());
     }
 
     void CellCostFmaxlb::add_property(BoxProperties &map) {
@@ -112,7 +113,7 @@ BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(BxpMinMax::id), y_heap(e.y_heap),
     }
 
     void CellCostmaxFmaxub::set_minmax_data(Cell &c) {
-        c.prop.add(new BxpMinMax());
+//        c.prop.add(new BxpMinMax());
     }
 
     void CellCostmaxFmaxub::add_property(BoxProperties &map) {
@@ -128,7 +129,7 @@ BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(BxpMinMax::id), y_heap(e.y_heap),
     }
 
     void CellCostFmaxub::set_minmax_data(Cell &c) {
-        c.prop.add(new BxpMinMax());
+//        c.prop.add(new BxpMinMax());
     }
 
     void CellCostFmaxub::add_property(BoxProperties &map) {
@@ -146,7 +147,7 @@ BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(BxpMinMax::id), y_heap(e.y_heap),
 }
 
     void CellCostFmaxlb_opt::set_minmax_data(Cell& c) {
-        c.prop.add(new BxpMinMaxOpti());
+//        c.prop.add(new BxpMinMaxOpti());
     }
 
     void CellCostFmaxlb_opt::add_property(BoxProperties &map) {
@@ -162,7 +163,7 @@ BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(BxpMinMax::id), y_heap(e.y_heap),
     }
 
     void CellCostmaxFmaxub_opt::set_minmax_data(Cell &c) {
-        c.prop.add(new BxpMinMaxOpti());
+//        c.prop.add(new BxpMinMaxOpti());
     }
 
     void CellCostmaxFmaxub_opt::add_property(BoxProperties &map) {
@@ -178,7 +179,7 @@ BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(BxpMinMax::id), y_heap(e.y_heap),
     }
 
     void CellCostFmaxub_opt::set_minmax_data(Cell &c) {
-        c.prop.add(new BxpMinMaxOpti());
+//        c.prop.add(new BxpMinMaxOpti());
     }
 
     void CellCostFmaxub_opt::add_property(BoxProperties &map) {
@@ -196,7 +197,7 @@ BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(BxpMinMax::id), y_heap(e.y_heap),
     }
 
     void CellCostFmaxlb_csp::set_minmax_data(Cell& c) {
-        c.prop.add(new BxpMinMaxCsp());
+//        c.prop.add(new BxpMinMaxCsp());
     }
 
     void CellCostFmaxlb_csp::add_property(BoxProperties &map) {
@@ -212,7 +213,7 @@ BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(BxpMinMax::id), y_heap(e.y_heap),
     }
 
     void CellCostmaxFmaxub_csp::set_minmax_data(Cell &c) {
-        c.prop.add(new BxpMinMaxCsp());
+//        c.prop.add(new BxpMinMaxCsp());
     }
 
     void CellCostmaxFmaxub_csp::add_property(BoxProperties &map) {
@@ -228,7 +229,7 @@ BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(BxpMinMax::id), y_heap(e.y_heap),
     }
 
     void CellCostFmaxub_csp::set_minmax_data(Cell &c) {
-        c.prop.add(new BxpMinMaxCsp());
+//        c.prop.add(new BxpMinMaxCsp());
     }
 
     void CellCostFmaxub_csp::add_property(BoxProperties &map) {
