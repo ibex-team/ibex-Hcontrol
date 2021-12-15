@@ -19,7 +19,8 @@
 #include "ibex-affine/ibex_AffineEval.h"
 
 namespace ibex {
-
+    class BxpMinMax;
+    class BxpMinMaxSub;
 
     class EvalMax {
 
@@ -29,7 +30,7 @@ namespace ibex {
 //        EvalMax(Function& f, int nx, int ny); TODO
 
         /* Constructor with constraint */
-        EvalMax(NormalizedSystem& xy_sys, int nx, int ny, Ctc& ctc_xy);
+        EvalMax(ExtendedSystem& xy_sys, int nx, int ny, Ctc& ctc_xy);
 
         /* Constructor*/
 //    EvalMax(NormalizedSystem& y_sys,Ctc& ctc_xy,UnconstrainedLocalSearch* local_solver,bool csp_actif = false);
@@ -52,8 +53,8 @@ namespace ibex {
          *         -min_prec: minimum size of boxes in y_heap
          *         -is_midp: true if optimize run with x midpoint eval, false else
          * */
-        Interval eval(IntervalVector& X);
-        Interval eval(IntervalVector& X, BoxProperties& prop, double loup); // TODO without loup argument?
+        Interval eval(IntervalVector& X, double loup);
+        Interval eval(IntervalVector& X, BoxProperties& prop, double loup); // TODO without loup argument
 //        bool eval(Cell* x_cell, double loup);
 
         /**
@@ -72,7 +73,7 @@ namespace ibex {
         bool monitor;
         int local_search_iter;
         bool visit_all;
-        NormalizedSystem& xy_sys; // contains constraints on x and y
+        ExtendedSystem& xy_sys; // contains constraints on x and y
         double goal_abs_prec; // absolute precision on goal evaluation, stop maximization when reached
 
     private:
@@ -131,7 +132,7 @@ namespace ibex {
          */
         static IntervalVector init_xy_box(const IntervalVector& x_box, const IntervalVector& y_box);
 
-        bool handle_constraint(BxpMinMax *data_y, IntervalVector &xy_box, IntervalVector &y_box);
+        bool handle_constraint(BxpMinMaxSub *data_y, IntervalVector &xy_box, IntervalVector &y_box);
         bool handle_cstfree(IntervalVector& xy_box, Cell * y_cell);
 
         /**

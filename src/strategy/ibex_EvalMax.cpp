@@ -14,7 +14,7 @@ namespace ibex {
     const double EvalMax::default_goal_abs_prec = 1e-2;
 
 //EvalMax::EvalMax(Function &f, int nx, int ny) {}
-    EvalMax::EvalMax(NormalizedSystem &xy_sys, int nx, int ny, Ctc &ctc_xy) :
+    EvalMax::EvalMax(ExtendedSystem &xy_sys, int nx, int ny, Ctc &ctc_xy) :
             trace(false), timeout(default_timeout),
             list_elem_max(0), nb_iter(0), prec_y(0),
             monitor(false), local_search_iter(0), xy_sys(xy_sys), goal_abs_prec(default_goal_abs_prec), ctc_xy(ctc_xy),
@@ -24,7 +24,7 @@ namespace ibex {
 
     EvalMax::~EvalMax() = default;
 
-    Interval EvalMax::eval(IntervalVector &X) {
+    Interval EvalMax::eval(IntervalVector &X, double loup) {
 //        TODO
     }
 
@@ -36,9 +36,9 @@ namespace ibex {
         Cell *x_cell = new Cell(X);
         csp_actif = false; // TODO
 
-        if (csp_actif) data_x = dynamic_cast<BxpMinMax *>(prop[BxpMinMaxCsp::id]);
-        else           data_x = dynamic_cast<BxpMinMaxOpti *>(prop[BxpMinMax::id]); // TODO BxpMinMaxOpti
-
+//        if (csp_actif) data_x = dynamic_cast<BxpMinMax *>(prop[BxpMinMaxCsp::get_id(xy_sys)]);
+//        else           data_x = dynamic_cast<BxpMinMax *>(prop[BxpMinMaxOpti::get_id(xy_sys)]);
+        data_x = dynamic_cast<BxpMinMax *>(prop[BxpMinMax::get_id(*this)]);
 
         //std::cout <<"    DEB "<<data_x->fmax <<std::endl;
 //                cout<<endl<<"*************************"<<endl;
@@ -70,7 +70,7 @@ namespace ibex {
         {
             double lower_bound_ls = local_search_process(x_cell->box, xy_box, loup);
             if (lower_bound_ls > data_x->fmax.ub()) {
-                ibex_error("ibex_LightOptimMinMax: error, lb >ub from local search. Please report this bug.");
+                ibex_error("ibex_LightOptimMinMax: error, lb >ub from local search. Please report this bug."); // TODO ibex_LightOptimMinMax -> ibex_EvalMax
             }
 //            cout<<"local optim return new lb: "<< lower_bound_ls<<endl;
             if (lower_bound_ls > loup) {
@@ -153,7 +153,7 @@ namespace ibex {
                 {
                     if (!y_heap->empty()) {
                         lb.push_back(data_x->fmax.lb());
-                        auto top1_minmax = dynamic_cast<BxpMinMax *>(y_heap->top1()->prop[BxpMinMax::id]);
+                        auto top1_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap->top1()->prop[BxpMinMaxSub::get_id(*this)]);
                         if (!top1_minmax)
                             ibex_error("[ibex_EvalMax] -- null ptr in eval: top1 element has no BxpMinMax.");
                         if (save_heap_ub < top1_minmax->pf.ub())
@@ -186,9 +186,9 @@ namespace ibex {
                 {
                     if (!y_heap->empty()) {
                         lb.push_back(data_x->fmax.lb());
-                        auto top1_minmax = dynamic_cast<BxpMinMax *>(y_heap->top1()->prop[BxpMinMax::id]);
+                        auto top1_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap->top1()->prop[BxpMinMaxSub::get_id(*this)]);
                         if (!top1_minmax)
-                            ibex_error("[ibex_EvalMax] -- null ptr in eval: top1 element has no BxpMinMax.");
+                            ibex_error("[ibex_EvalMax] -- null ptr in eval: top1 element has no BxpMinMaxSub.");
                         if (save_heap_ub < top1_minmax->pf.ub())
                             ub.push_back(top1_minmax->pf.ub());
                         else
@@ -245,13 +245,13 @@ namespace ibex {
 //        cout<<"non empty heap"<<endl;
 
         // Update the lower and upper bound of of "max f(x,y_heap)"
-        auto top1_minmax = dynamic_cast<BxpMinMax *>(y_heap->top1()->prop[BxpMinMax::id]);
+        auto top1_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap->top1()->prop[BxpMinMaxSub::get_id(*this)]);
         if (!top1_minmax)
-            ibex_error("[ibex_EvalMax] -- null ptr in eval: top1 element has no BxpMinMax.");
+            ibex_error("[ibex_EvalMax] -- null ptr in eval: top1 element has no BxpMinMaxSub.");
         double new_fmax_ub = top1_minmax->pf.ub(); // get the upper bound of max f(x,y_heap)
-        auto top2_minmax = dynamic_cast<BxpMinMax *>(y_heap->top2()->prop[BxpMinMax::id]);
+        auto top2_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap->top2()->prop[BxpMinMaxSub::get_id(*this)]);
         if (!top2_minmax)
-            ibex_error("[ibex_EvalMax] -- null ptr in eval: top2 element has no BxpMinMax.");
+            ibex_error("[ibex_EvalMax] -- null ptr in eval: top2 element has no BxpMinMaxSub.");
         double new_fmax_lb = top2_minmax->pf.lb(); // get the lower bound of max f(x,y_heap)
 
         //std::cout<<"new_fmax_ub: "<<new_fmax_ub<<std::endl<<"new_fmax_lb: "<<new_fmax_lb<<std::endl<<"fmax_lb (from found point): "<<data_x->fmax.lb()<<std::endl;
@@ -308,12 +308,13 @@ namespace ibex {
         // recuperer les data
         BxpMinMax* data_x;
 
-        if (csp_actif)
-            data_x = dynamic_cast<BxpMinMax *>(x_cell->prop[BxpMinMaxCsp::id]);
-        else
-            data_x = dynamic_cast<BxpMinMax *>(x_cell->prop[BxpMinMaxOpti::id]);
+        data_x = dynamic_cast<BxpMinMax *>(x_cell->prop[BxpMinMax::get_id(*this)]);
+//        if (csp_actif)
+//            data_x = dynamic_cast<BxpMinMax *>(x_cell->prop[BxpMinMaxCsp::get_id(*this)]);
+//        else
+//            data_x = dynamic_cast<BxpMinMax *>(x_cell->prop[BxpMinMaxOpti::get_id(*this)]);
 
-        auto data_y = dynamic_cast<BxpMinMax *>(y_cell->prop[BxpMinMax::id]);
+        auto data_y = dynamic_cast<BxpMinMaxSub *>(y_cell->prop[BxpMinMaxSub::get_id(*this)]);
 //        cout<<"xy_cell box: "<<xy_box<<" value of pu : "<<data_y->pu<<endl;
 
 
@@ -502,9 +503,9 @@ namespace ibex {
             return true;
         }
 
-        auto top1_minmax = dynamic_cast<BxpMinMax *>(y_heap->top1()->prop[BxpMinMax::id]);
+        auto top1_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap->top1()->prop[BxpMinMaxSub::get_id(*this)]);
         if (!top1_minmax)
-            ibex_error("[ibex_EvalMax] -- null ptr in stop_crit_reached: top1 element has no BxpMinMax.");
+            ibex_error("[ibex_EvalMax] -- null ptr in stop_crit_reached: top1 element has no BxpMinMaxSub.");
         if (csp_actif && (top1_minmax->pf.ub() < 0)) { // for all y constraint respected, stop
 //            cout<<"Stop light solver: Csp case, upper bound lower than 0"<<endl;
             return true;
@@ -546,7 +547,7 @@ namespace ibex {
         return res;
     }
 
-    bool EvalMax::handle_constraint(BxpMinMax* data_y, IntervalVector& xy_box, IntervalVector& y_box) {
+    bool EvalMax::handle_constraint(BxpMinMaxSub* data_y, IntervalVector& xy_box, IntervalVector& y_box) {
 //    cout<<"handle constraint on xy, xy init: "<<xy_box<<endl;
         switch (check_constraints(xy_box)){
             case 2: { // all the constraints are satisfied
@@ -602,7 +603,7 @@ namespace ibex {
 
     IntervalVector EvalMax::get_feasible_point(Cell* x_cell, Cell* const y_cell) {
         IntervalVector mid_y_box = get_mid_y(x_cell->box,y_cell->box); // get the box (x,mid(y))
-        auto y_data = dynamic_cast<BxpMinMax*>(y_cell->prop[BxpMinMax::id]);
+        auto y_data = dynamic_cast<BxpMinMax*>(y_cell->prop[BxpMinMax::get_id(*this)]);
         if (!y_data)
             ibex_error("[ibex_EvalMax] -- null ptr in get_feasible_point: y_data element has no BxpMinMax.");
         if ((y_data->pu != 1)) { // constraint on xy exist and is not proved to be satisfied

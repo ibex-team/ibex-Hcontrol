@@ -39,19 +39,19 @@ void TestEvalMax::ex1() {
 	xy_fac.add_var(x, x_ini);
 	xy_fac.add_var(y, y_ini);
 	xy_fac.add_goal(func);
-	NormalizedSystem xy_sys(xy_fac);
+	ExtendedSystem xy_sys(xy_fac);
 	CtcIdentity xy_ctc(x_ini.size()+y_ini.size());
+
 
     EvalMax ex1(xy_sys, 1, 1, xy_ctc);
     ex1.timeout = 100;
-    ExtendedSystem sys(xy_sys);
-    auto bxpties = BoxProperties(x_ini);
-    BxpMinMaxOpti bxpmm(sys);
-    auto bxp = dynamic_cast<Bxp*>(&bxpmm);
+    auto bxpties = BoxProperties(xy_sys.box);
+    BxpMinMax bxpminmax(ex1);
+    auto bxp = dynamic_cast<Bxp*>(&bxpminmax);
     if (!bxp) ibex_error("casting error");
-//    bxpties.add(bxp);
+    bxpties.add(bxp);
     auto res = ex1.eval(x_sys.box, bxpties, 1000);
-    cout << "result: " << res << endl;
+    cout << "result: " << res << " nb_iter = " << ex1.nb_iter << endl;
 
     CPPUNIT_ASSERT(res.contains(-100)); // TODO
 
