@@ -53,8 +53,8 @@ namespace ibex {
          *         -min_prec: minimum size of boxes in y_heap
          *         -is_midp: true if optimize run with x midpoint eval, false else
          * */
-        Interval eval(IntervalVector& X, double loup);
-        Interval eval(IntervalVector& X, BoxProperties& prop, double loup); // TODO without loup argument
+        Interval eval(IntervalVector& X, double loup = 1e15);
+        Interval eval(IntervalVector& X, BoxProperties& prop, double loup = 1e15);
 //        bool eval(Cell* x_cell, double loup);
 
         /**

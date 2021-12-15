@@ -25,7 +25,8 @@ namespace ibex {
     EvalMax::~EvalMax() = default;
 
     Interval EvalMax::eval(IntervalVector &X, double loup) {
-//        TODO
+        BoxProperties prop(this->xy_sys.box);
+        this->eval(X, prop, loup);
     }
 
     Interval EvalMax::eval(IntervalVector &X, BoxProperties &prop, double loup) {
