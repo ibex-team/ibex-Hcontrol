@@ -7,19 +7,19 @@
 namespace ibex {
 
 
-feasible_point::feasible_point(const Vector& box,const Interval& eval) : point(box), eval(eval) {}
-feasible_point::feasible_point(const feasible_point& pt) = default;
-feasible_point::~feasible_point() = default;
+    feasible_point::feasible_point(const Vector& box,const Interval& eval) : point(box), eval(eval) {}
+    feasible_point::feasible_point(const feasible_point& pt) = default;
+    feasible_point::~feasible_point() = default;
 
-Map<long,long,false>& BxpMinMax::ids() {
-	static Map<long,long,false> _ids;
-	return _ids;
-}
+    Map<long,long,false>& BxpMinMax::ids() {
+        static Map<long,long,false> _ids;
+        return _ids;
+    }
 
-Map<long,long,false>& BxpMinMaxSub::ids() {
-	static Map<long,long,false> _ids;
-	return _ids;
-}
+    Map<long,long,false>& BxpMinMaxSub::ids() {
+        static Map<long,long,false> _ids;
+        return _ids;
+    }
 
 //Map<long,long,false>& BxpMinMaxOpti::ids() {
 //    static Map<long,long,false> _ids;
@@ -31,64 +31,64 @@ Map<long,long,false>& BxpMinMaxSub::ids() {
 //    return _ids;
 //}
 
-BxpMinMax::BxpMinMax(EvalMax& evalmax) : Bxp(get_id(evalmax)),
-                                            best_sol(nullptr),
-                                            y_heap_costf1(evalmax), y_heap_costf2(evalmax),
-                                            y_heap(new DoubleHeap<Cell>(y_heap_costf1, false,
-                                                                        y_heap_costf2, false)),
-                                            nb_bisect(0), pu(0), evalmax(evalmax) {
+    BxpMinMax::BxpMinMax(EvalMax& evalmax) : Bxp(get_id(evalmax)),
+                                             best_sol(nullptr),
+                                             y_heap_costf1(evalmax), y_heap_costf2(evalmax),
+                                             y_heap(new DoubleHeap<Cell>(y_heap_costf1, false,
+                                                                         y_heap_costf2, false)),
+                                             nb_bisect(0), pu(0), evalmax(evalmax) {
 
-}
-
-BxpMinMax::~BxpMinMax() {
-    if (y_heap != nullptr) {
-//        std::cout<<" flushing y_heap, which contains"<<y_heap->size()<< "elements"<<std::endl;
-        y_heap->flush();
-//        std::cout<<"y_heap flushed"<<std::endl;
-        delete y_heap;
     }
+
+    BxpMinMax::~BxpMinMax() {
+        if (y_heap != nullptr) {
+//        std::cout<<" flushing y_heap, which contains"<<y_heap->size()<< "elements"<<std::endl;
+            y_heap->flush();
+//        std::cout<<"y_heap flushed"<<std::endl;
+            delete y_heap;
+        }
 //    std::cout<<"yheap flushed, delete best sol..."<<std::endl;
-    delete best_sol;
-}
+        delete best_sol;
+    }
 
 
-void BxpMinMax::clear_fsbl_list() {
-    fsbl_pt_list.clear();
-}
+    void BxpMinMax::clear_fsbl_list() {
+        fsbl_pt_list.clear();
+    }
 
-void BxpMinMax::clear_notin_point(const IntervalVector &x_box, bool strong_del) {
-    int size = fsbl_pt_list.size();
-    std::vector<feasible_point> save_vect;
+    void BxpMinMax::clear_notin_point(const IntervalVector &x_box, bool strong_del) {
+        int size = fsbl_pt_list.size();
+        std::vector<feasible_point> save_vect;
 //    std::cout<<"======================= "<<std::endl;
 //    std::cout<<" check in box: "<<x_box<<std::endl;
-    for(int i=0;i<size;i++) {
-        feasible_point pt = fsbl_pt_list.back();
-        fsbl_pt_list.pop_back();
+        for(int i=0;i<size;i++) {
+            feasible_point pt = fsbl_pt_list.back();
+            fsbl_pt_list.pop_back();
 //        std::cout<<" feas pt "<<pt->point<<std::endl;
-        if((x_box.contains(pt.point.subvector(0,x_box.size()-1)))) {
+            if((x_box.contains(pt.point.subvector(0,x_box.size()-1)))) {
 //            if(strong_del)
 //                delete pt;
-            save_vect.push_back(pt);
+                save_vect.push_back(pt);
 //            std::cout<<"      is deleted"<<std::endl;
-        }
+            }
 //        else {
 //            std::cout<<"      is NOT deleted"<<std::endl;
 
 //        }
-    }
-    fsbl_pt_list = save_vect;
+        }
+        fsbl_pt_list = save_vect;
 //    std::cout<<"***********************"<<std::endl;
-}
+    }
 
-std::pair<Bxp*, Bxp*> BxpMinMax::down() {
-    return {new BxpMinMax(*this), new BxpMinMax(*this)};
-}
+    std::pair<Bxp*, Bxp*> BxpMinMax::down() {
+        return {new BxpMinMax(*this), new BxpMinMax(*this)};
+    }
 
-BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(get_id(e.evalmax)), best_sol(nullptr), y_heap(e.y_heap),
-                                           nb_bisect(e.nb_bisect), y_heap_costf1(e.y_heap_costf1), y_heap_costf2(e.y_heap_costf2),
-                                           pu(e.pu), evalmax(e.evalmax) {
+    BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(get_id(e.evalmax)), best_sol(nullptr), y_heap(e.y_heap),
+                                               nb_bisect(e.nb_bisect), y_heap_costf1(e.y_heap_costf1), y_heap_costf2(e.y_heap_costf2),
+                                               pu(e.pu), evalmax(e.evalmax) {
 
-}
+    }
 
     long BxpMinMax::get_id(const EvalMax& evalmax) {
         try {
@@ -118,7 +118,7 @@ BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(get_id(e.evalmax)), best_sol(null
     }
 
     BxpMinMaxSub::BxpMinMaxSub(const BxpMinMaxSub &e) : Bxp(get_id(e.evalmax)), pf(e.pf),
-                                               pu(e.pu), evalmax(e.evalmax) {
+                                                        pu(e.pu), evalmax(e.evalmax) {
 
     }
 

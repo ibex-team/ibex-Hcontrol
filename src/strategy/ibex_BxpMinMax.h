@@ -31,12 +31,12 @@ namespace ibex {
         explicit CellCostMaxPFub_MinMax(const EvalMax& evalmax);
 
         /**
-         * \brief Add OptimData
+         * \brief Add BxpData
          */
         virtual void add_property(BoxProperties& map);
 
         /**
-         * \brief Set "pf" in OptimData in the cell
+         * \brief Set "pf" in BxpData in the cell
          */
         virtual void set_optim_data(Cell& c);
 
@@ -46,7 +46,7 @@ namespace ibex {
     protected:
 
         /**
-         * \brief The system.
+         * \brief The EvalMax (previously light optim MinMax).
          */
         const EvalMax& evalmax;
     };
@@ -57,12 +57,12 @@ namespace ibex {
         CellCostPFlb_MinMax(const EvalMax& evalmax);
 
         /**
-         * \brief Add OptimData
+         * \brief Add BxpData
          */
         virtual void add_property(BoxProperties& map);
 
         /**
-         * \brief Set "pf" in OptimData in the cell
+         * \brief Set "pf" in BxpData in the cell
          */
         virtual void set_optim_data(Cell& c);
 
@@ -72,7 +72,7 @@ namespace ibex {
     protected:
 
         /**
-         * \brief The system.
+         * \brief The EvalMax (previously light optim MinMax).
          */
         const EvalMax& evalmax;
     };
@@ -94,7 +94,7 @@ namespace ibex {
         ~BxpMinMax() override;
 
         /**
-         * \brief clear list of feasible by deleting contained pointer on feasible_point object, call only when x_cell discard because not solution. /!\ not when x_cell bissected
+         * \brief clear list of feasible by deleting contained pointer on feasible_point object, call only when x_cell discard because not solution. /!\ not when x_cell bisected
          */
         void clear_fsbl_list();
 
@@ -151,7 +151,7 @@ namespace ibex {
     protected:
 
         /**
-         * \brief The system.
+         * \brief The EvalMax (previously light optim MinMax).
          */
         const EvalMax& evalmax;
         static Map<long, long, false> &ids();
@@ -560,7 +560,7 @@ namespace ibex {
     protected:
 
         /**
-         * \brief The system.
+         * \brief The EvalMax (previously light optim MinMax).
          */
         const EvalMax& evalmax;
         static Map<long, long, false> &ids();

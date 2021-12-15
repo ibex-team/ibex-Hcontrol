@@ -46,10 +46,7 @@ void TestEvalMax::ex1() {
     EvalMax ex1(xy_sys, 1, 1, xy_ctc);
     ex1.timeout = 100;
     auto bxpties = BoxProperties(xy_sys.box);
-    BxpMinMax bxpminmax(ex1);
-    auto bxp = dynamic_cast<Bxp*>(&bxpminmax);
-    if (!bxp) ibex_error("casting error");
-    bxpties.add(bxp);
+    bxpties.add(new BxpMinMax(ex1));
     auto res = ex1.eval(x_sys.box, bxpties, 1000);
     cout << "result: " << res << " nb_iter = " << ex1.nb_iter << endl;
 

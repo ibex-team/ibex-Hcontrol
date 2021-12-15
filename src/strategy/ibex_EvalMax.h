@@ -57,13 +57,6 @@ namespace ibex {
         Interval eval(IntervalVector& X, BoxProperties& prop, double loup = 1e15);
 //        bool eval(Cell* x_cell, double loup);
 
-        /**
-         * Allows to add the backtrackable data required
-         * by this MinMax optimizer to the root cell
-         */
-//        void add_backtrackable(Cell& root, const IntervalVector& y_init,int critpr);
-
-
         int trace;
         double timeout;
         int list_elem_max;
@@ -109,7 +102,7 @@ namespace ibex {
         IntervalVector xy_box_hull(const IntervalVector& x_box);
 
         /**
-         * run local search algorithm for a particular x and maximizes over y to provide y_max a local maximum. Objectif function is then evaluate at (xbox,max_y) to try to provide a better lower bound.
+         * run local search algorithm for a particular x and maximizes over y to provide y_max a local maximum. Objective function is then evaluate at (xbox,max_y) to try to provide a better lower bound.
          * Inputs: x_box: current x box, xy_box: box after contraction w.r.t contraction, loup: current lower upper.
          */
         double local_search_process(const IntervalVector& x_box, const IntervalVector& xy_box, double loup);
@@ -143,7 +136,7 @@ namespace ibex {
         static Interval eval_all(Function* f, const IntervalVector& box);
 
         /**
-         * return 0 if box is non feasible w.r.t constraints on xy, 1 if not known, 2 if box is entierly feasible
+         * return 0 if box is non feasible w.r.t constraints on xy, 1 if not known, 2 if box is entirely feasible
          */
         int check_constraints(const IntervalVector& xy_box);
 

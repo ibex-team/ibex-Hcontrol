@@ -245,7 +245,7 @@ namespace ibex {
         }
 //        cout<<"non empty heap"<<endl;
 
-        // Update the lower and upper bound of of "max f(x,y_heap)"
+        // Update the lower and upper bound of "max f(x,y_heap)"
         auto top1_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap->top1()->prop[BxpMinMaxSub::get_id(*this)]);
         if (!top1_minmax)
             ibex_error("[ibex_EvalMax] -- null ptr in eval: top1 element has no BxpMinMaxSub.");
@@ -269,7 +269,7 @@ namespace ibex {
         //            std::cout<<"Issue: fmax_lb > 100,000"<<std::endl;
 
         //        }
-                cout << "loup: " << loup << endl;
+        cout << "loup: " << loup << endl;
 
 //        if (csp_actif) { // if SIC, all boxes lower than  can be deleted since of no interest (verify the constraint)
 //            y_heap->contract(loup);
@@ -344,7 +344,7 @@ namespace ibex {
 //                        data_x->clear_fsbl_list(); // need to delete elements of fsbl_point_list since this branch is closed and they will not be needed later
 //                        delete x_cell;
                 //                        std::cout <<"           OUT 6 mid="<<y_cell->box<<std::endl;
-                return false; // no need to go further, x_box does not contains the solution
+                return false; // no need to go further, x_box does not contain the solution
             }
             else if (midres.lb() > data_y->pf.lb()) { // found y such as xy constraint is respected
                 // TODO	 to check		// il faut faire un contract de y_heap
@@ -409,7 +409,7 @@ namespace ibex {
 
         // check if it is possible to find a better solution than those already found on x
         if ((data_y->pf.lb() > loup) && (data_y->pu == 1)) {
-            // box verified condition and eval is above best max, x box does not contains the solution
+            // box verified condition and eval is above best max, x box does not contain the solution
             // I think this case was already check with the mid-point.
             delete y_cell;
 //                data_x->clear_fsbl_list(); // need to delete elements of fsbl_point_list since this branch is closed and they will not be needed later
@@ -472,7 +472,7 @@ namespace ibex {
                 xy_box_eval[k] = final_point[k];
             if (check_constraints(xy_box) == 2) // y_max must respect constraints
             {
-//            Interval eval = xy_sys.goal->eval_baumann(xy_box_eval); // eval ojective function at (x_box,y_max)
+//            Interval eval = xy_sys.goal->eval_baumann(xy_box_eval); // eval objective function at (x_box,y_max)
                 Interval eval = eval_all(xy_sys.goal, xy_box_eval);
 //            cout<<"local optim solution: "<<xy_box_eval<<" objectif eval at solution: "<<eval<<endl;
                 res &= Interval(eval.lb(), POS_INFINITY); // update greatest lower bound
@@ -637,7 +637,7 @@ namespace ibex {
 
         for (int i=0; i<xy_sys.nb_ctr; i++) {
             Interval int_res = eval_all(const_cast<Function *>(&(xy_sys.ctrs[i].f)), xy_box);
-    //            cout<<" val of ctr "<<i<<" : "<<int_res<<endl;
+            //            cout<<" val of ctr "<<i<<" : "<<int_res<<endl;
             if (int_res.lb() > 0)
                 return 0;
             else if (int_res.ub() >= 0)
