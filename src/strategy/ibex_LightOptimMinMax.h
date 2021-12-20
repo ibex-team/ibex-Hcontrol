@@ -22,7 +22,7 @@
 #include <string>
 #include "ibex_CtcIdentity.h"
 #include "ibex_UnconstrainedLocalSearch.h"
-#include "ibex_AffineEval.h"
+#include "ibex-affine/ibex_AffineEval.h"
 #include "ibex_LargestFirst.h"
 
 

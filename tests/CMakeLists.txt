@@ -1,16 +1,18 @@
 # by Ibex and the CMAKE_MODULE_PATH updated accordingly by ibex_init_common)
 find_package (CppUnit)
 
+set (TESTS_LIST TestEvalMax)
+
 # Only add the test targets if cppunit was found
 if (CPPUNIT_FOUND)
   # Compile common stuff for the tests
   add_library (test_common utest.cpp utils.cpp utils.h )
-  target_link_libraries (test_common PUBLIC ibex-Hconrol)
+  target_link_libraries (test_common PUBLIC ibex-Hcontrol)
   
 	foreach (test ${TESTS_LIST})
 	  # /!\ The test and the target building the executable have the same name
 	  add_executable (${test} ${test}.cpp ${test}.h)
-	  target_link_libraries (${test} ibex-Hcontrol)
+	  target_link_libraries (${test} test_common ibex-Hcontrol CppUnit::CppUnit)
 	  add_dependencies (check ${test})
 	  add_test (${test} ${test})
 	endforeach ()
