@@ -15,7 +15,7 @@ const double EvalMax::default_goal_abs_prec = 1e-2;
 const int    EvalMax::default_prob_heap = 10; //10% to pop second heap in light_solver
 
 //EvalMax::EvalMax(Function &f, int nx, int ny) {}
-EvalMax::EvalMax(IntervalVector& y_box_init, ExtendedSystem &xy_sys, int nx, int ny, Ctc &ctc_xy) : id(next_id()),
+EvalMax::EvalMax(IntervalVector& y_box_init, System &xy_sys, Ctc &ctc_xy) : id(next_id()),
 		trace(false), timeout(default_timeout),
 		list_elem_max(0), nb_iter(0), prec_y(0),
 		monitor(false), local_search_iter(0), xy_sys(xy_sys), goal_abs_prec(default_goal_abs_prec), ctc_xy(ctc_xy),
@@ -47,6 +47,7 @@ EvalMax::EvalMax(IntervalVector& y_box_init, ExtendedSystem &xy_sys, int nx, int
 EvalMax::~EvalMax() {
 	delete bsc;
     delete local_solver;
+    delete minus_goal_y_at_x;
 	delete_save_heap();
 }
 

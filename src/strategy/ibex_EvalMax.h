@@ -24,7 +24,7 @@ namespace ibex {
 class BxpMinMax;
 class BxpMinMaxSub;
 
-class EvalMax : protected Memory {
+class EvalMax  {
 
 public:
 
@@ -32,7 +32,7 @@ public:
 	//        EvalMax(Function& f, int nx, int ny); TODO
 
 	/* Constructor with constraint */
-	EvalMax(IntervalVector& y_box_init, ExtendedSystem& xy_sys, int nx, int ny, Ctc& ctc_xy);
+	EvalMax(IntervalVector& y_box_init, System& xy_sys, Ctc& ctc_xy);
 
 	/* Constructor*/
 	//    EvalMax(NormalizedSystem& y_sys,Ctc& ctc_xy,UnconstrainedLocalSearch* local_solver,bool csp_actif = false);
@@ -81,7 +81,7 @@ public:
 	bool monitor;
 	int local_search_iter;
 	bool visit_all;
-	ExtendedSystem& xy_sys; // contains constraints on x and y
+	System& xy_sys; // contains constraints on x and y
 	double goal_abs_prec; // absolute precision on goal evaluation, stop maximization when reached
 
 

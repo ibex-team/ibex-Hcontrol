@@ -19,23 +19,19 @@ int main (int argc, char *argv[]) {
 
     SystemFactory x_fac;
     x_fac.add_var(x, x_ini);
-    NormalizedSystem x_sys(x_fac);
+    System x_sys(x_fac);
     CtcIdentity x_ctc(x_ini.size());
 
     SystemFactory xy_fac;
     xy_fac.add_var(x, x_ini);
     xy_fac.add_var(y, y_ini);
     xy_fac.add_goal(func);
-    ExtendedSystem xy_sys(xy_fac);
+    System xy_sys(xy_fac);
     CtcIdentity xy_ctc(x_ini.size()+y_ini.size());
 
-    EvalMax ex1(xy_sys, 1, 1, xy_ctc);
+    EvalMax ex1(y_ini,xy_sys, xy_ctc);
     ex1.timeout = 100;
-    auto bxpties = BoxProperties(x_sys.box);
-    BxpMinMax bxpminmax(ex1);
-    auto bxp = dynamic_cast<Bxp*>(&bxpminmax);
-    if (!bxp) ibex_error("casting error");
-    bxpties.add(bxp);
+    BoxProperties bxpties(x_sys.box);
     auto res = ex1.eval(x_sys.box, bxpties, 1000);
     cout << "result: " << res << endl;
 

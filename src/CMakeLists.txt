@@ -12,7 +12,7 @@ list (APPEND SRC	strategy/ibex_CellMinMaxHeap.h
         )
 
 # Create the target for libibex-Hcontrol
-add_library (ibex-Hcontrol SHARED ${SRC})
+add_library (ibex-Hcontrol  ${SRC})
 target_include_directories (ibex-Hcontrol PUBLIC
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/strategy>
                             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
