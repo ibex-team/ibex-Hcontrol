@@ -26,8 +26,8 @@ else ()
   message (STATUS "Ibex was compiled without any Linear Programming library")
 endif ()
 
-find_package (IBEX_AFFINE REQUIRED)
-message (STATUS "Found Ibex-affine")
+#find_package (IBEX_AFFINE REQUIRED)
+#message (STATUS "Found Ibex-affine")
 
 ################################################################################
 # Generate pkg-config file and install it (can be removed if no library is

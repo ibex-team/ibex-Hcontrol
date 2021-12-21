@@ -2,8 +2,8 @@
 // Created by joris on 17/11/2021.
 //
 
-#ifndef IBEX_HCONTROL_BXPMINMAX_H
-#define IBEX_HCONTROL_BXPMINMAX_H
+#ifndef __IBEX_HCONTROL_BXPMINMAX_H
+#define __IBEX_HCONTROL_BXPMINMAX_H
 
 #include "ibex_Bxp.h"
 #include "ibex_Interval.h"
@@ -11,156 +11,97 @@
 #include "ibex_DoubleHeap.h"
 #include "ibex_CellCostFunc.h"
 #include "ibex_EvalMax.h"
+#include "ibex_CellMinMaxHeap.h"
 
 namespace ibex {
-    class EvalMax;
+class EvalMax;
 
-    class feasible_point {
-    public:
-        feasible_point(const Vector& point,const Interval& eval);
-        feasible_point(const feasible_point& pt);
-        ~feasible_point();
+class feasible_point {
+public:
+	feasible_point(const Vector& point,const Interval& eval);
+	feasible_point(const feasible_point& pt);
+	~feasible_point();
 
-        Vector point;
-        Interval eval;
-    };
-
-
-    class CellCostMaxPFub_MinMax: public CostFunc<Cell> {
-    public:
-        explicit CellCostMaxPFub_MinMax(const EvalMax& evalmax);
-
-        /**
-         * \brief Add BxpData
-         */
-        virtual void add_property(BoxProperties& map);
-
-        /**
-         * \brief Set "pf" in BxpData in the cell
-         */
-        virtual void set_optim_data(Cell& c);
-
-        /** The "cost" of a element. */
-        virtual	double cost(const Cell& c) const;
-
-    protected:
-
-        /**
-         * \brief The EvalMax (previously light optim MinMax).
-         */
-        const EvalMax& evalmax;
-    };
+	Vector point;
+	Interval eval;
+};
 
 
-    class CellCostPFlb_MinMax: public CostFunc<Cell> {
-    public:
-        CellCostPFlb_MinMax(const EvalMax& evalmax);
 
-        /**
-         * \brief Add BxpData
-         */
-        virtual void add_property(BoxProperties& map);
+/**
+ * \brief Data required for EvalMax
+ */
+class BxpMinMax : public Bxp {
+public:
+	/**
+	 * \brief Constructor for the root node (followed by a call to init_root)
+	 */
+	explicit BxpMinMax(EvalMax& evalmax, int crit_heap);
 
-        /**
-         * \brief Set "pf" in BxpData in the cell
-         */
-        virtual void set_optim_data(Cell& c);
+	/**
+	 * \brief Delete *this
+	 */
+	~BxpMinMax() override;
 
-        /** The "cost" of a element. */
-        virtual	double cost(const Cell& c) const;
+	/**
+	 * \brief clear list of feasible by deleting contained pointer on feasible_point object, call only when x_cell discard because not solution. /!\ not when x_cell bisected
+	 */
+	void clear_fsbl_list();
 
-    protected:
-
-        /**
-         * \brief The EvalMax (previously light optim MinMax).
-         */
-        const EvalMax& evalmax;
-    };
+	/**
+	 * remove pointers from fsbl_point_list that point is not contained in x_box, object pointed at is also deleted if strong_del is true
+	 */
+	void clear_notin_point(const IntervalVector& x_box, bool strong_del);
 
 
-    /**
-     * \brief Data required for EvalMax
-     */
-    class BxpMinMax : public Bxp {
-    public:
-        /**
-         * \brief Constructor for the root node (followed by a call to init_root)
-         */
-        explicit BxpMinMax(EvalMax& evalmax);
+	/**
+	 * \brief Create a copy.
+	 */
+	virtual Bxp* copy(const IntervalVector& box, const BoxProperties& prop) const;
 
-        /**
-         * \brief Delete *this
-         */
-        ~BxpMinMax() override;
+	/**
+	 * \brief Update the property upon box modification.
+	 *
+	 */
+	void update(const BoxEvent& event, const BoxProperties& prop) override;
 
-        /**
-         * \brief clear list of feasible by deleting contained pointer on feasible_point object, call only when x_cell discard because not solution. /!\ not when x_cell bisected
-         */
-        void clear_fsbl_list();
+	/**
+	 * Enclosure of maximum of the objective function
+	 */
+	Interval fmax;
+	IntervalVector *best_sol;
 
-        /**
-         * remove pointers from fsbl_point_list that point is not contained in x_box, object pointed at is also deleted if strong_del is true
-         */
-        void clear_notin_point(const IntervalVector& x_box, bool strong_del);
+	/**
+	 * y_heap inherited from father of box
+	 */
+	CellMinMaxHeap y_heap;
 
-        /**
-         * \brief Duplicate the structure into the left/right nodes
-         */
-        std::pair<Bxp*, Bxp*> down();
+	std::vector<feasible_point> fsbl_pt_list;
+	long int nb_bisect;
 
-        /**
-         * \brief Create a copy.
-         */
-        virtual Bxp* copy(const IntervalVector& box, const BoxProperties& prop) const;
 
-        /**
-         * \brief Update the property upon box modification.
-         *
-         */
-        void update(const BoxEvent& event, const BoxProperties& prop) override;
+	static long get_id(const EvalMax& evalmax);
 
-        /**
-         * Enclosure of maximum of the objective function
-         */
-        Interval fmax;
-        IntervalVector *best_sol;
+	/**
+	 * \brief Casado criterion
+	 *
+	 * Constraint factor of the current box : between 0 infeasible and 1 for all constraints satisfied.
+	 */
+	double pu;
 
-        /**
-         * y_heap inherited from father of box
-         */
-        DoubleHeap<Cell>* y_heap;
+protected:
 
-        std::vector<feasible_point> fsbl_pt_list;
-        long int nb_bisect;
+	/**
+	 * \brief The EvalMax (previously light optim MinMax).
+	 */
+	const EvalMax& evalmax;
+	static Map<long, long, false> &ids();
 
-        /**
-         * Cost function of the heap to store the element of the light solver
-         */
-        CellCostMaxPFub_MinMax y_heap_costf1;
-        CellCostPFlb_MinMax y_heap_costf2;
-
-        static long get_id(const EvalMax& evalmax);
-
-        /**
-         * \brief Casado criterion
-         *
-         * Constraint factor of the current box : between 0 infeasible and 1 for all constraints satisfied.
-         */
-        double pu;
-
-    protected:
-
-        /**
-         * \brief The EvalMax (previously light optim MinMax).
-         */
-        const EvalMax& evalmax;
-        static Map<long, long, false> &ids();
-
-        /**
-         * \brief Constructor by copy.
-         */
-        BxpMinMax(const BxpMinMax& e);
-    };
+	/**
+	 * \brief Constructor by copy.
+	 */
+	BxpMinMax(const BxpMinMax& e);
+};
 
 
 //    /* Inherited classes from DataMinMax */
@@ -188,16 +129,34 @@ namespace ibex {
 
 /*================================== inline implementations ========================================*/
 
-    inline Bxp* BxpMinMax::copy(const IntervalVector& box, const BoxProperties& prop) const {
-        return new BxpMinMax(*this);
-    }
+inline Bxp* BxpMinMax::copy(const IntervalVector& box, const BoxProperties& prop) const {
+	return new BxpMinMax(*this);
+}
 
-    inline void BxpMinMax::update(const BoxEvent& event, const BoxProperties& prop) {
-        // TODO: we should call compute_pf and compute_pu here or create some
-        // "is_up_to_date" flag.
-        // This is actually done from the CellCostFunc classes
-        // and makes no problem so far as this property is not used elsewhere.
-    }
+inline void BxpMinMax::update(const BoxEvent& event, const BoxProperties& prop) {
+	// TODO: we should call compute_pf and compute_pu here or create some
+	// "is_up_to_date" flag.
+	// This is actually done from the CellCostFunc classes
+	// and makes no problem so far as this property is not used elsewhere.
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ///* Cost function definition for BxpMinMax class */
@@ -505,84 +464,6 @@ namespace ibex {
 //        ExtendedSystem &sys;
 //    };
 
-
-    /**
-     * \brief Data required for ordering the elements in y_heap of BxpMinMax
-     */
-    class BxpMinMaxSub : public Bxp {
-    public:
-        /**
-         * \brief Constructor for the root node (followed by a call to init_root)
-         */
-        explicit BxpMinMaxSub(const EvalMax& evalmax);
-
-        /**
-         * \brief Delete *this
-         */
-        ~BxpMinMaxSub() override;
-
-
-        /**
-         * \brief Duplicate the structure into the left/right nodes
-         */
-        std::pair<Bxp*, Bxp*> down();
-
-        /**
-         * \brief Create a copy.
-         */
-        virtual Bxp* copy(const IntervalVector& box, const BoxProperties& prop) const;
-
-        /**
-         * \brief Update the property upon box modification.
-         *
-         */
-        void update(const BoxEvent& event, const BoxProperties& prop) override;
-
-
-        static long get_id(const EvalMax& evalmax);
-
-        void compute_pf(const Function& goal, const IntervalVector& box);
-
-        /**
-         * \brief Casado criterion
-         *
-         * Image of the objective on the current box
-         */
-        Interval pf;
-
-        /**
-         * \brief Casado criterion
-         *
-         * Constraint factor of the current box : between 0 infeasible and 1 for all constraints satisfied.
-         */
-        double pu;
-
-    protected:
-
-        /**
-         * \brief The EvalMax (previously light optim MinMax).
-         */
-        const EvalMax& evalmax;
-        static Map<long, long, false> &ids();
-
-        /**
-         * \brief Constructor by copy.
-         */
-        BxpMinMaxSub(const BxpMinMaxSub& e);
-    };
-
-/*================================== inline implementations ========================================*/
-
-    inline Bxp* BxpMinMaxSub::copy(const IntervalVector& box, const BoxProperties& prop) const {
-        return new BxpMinMaxSub(*this);
-    }
-
-    inline void BxpMinMaxSub::update(const BoxEvent& event, const BoxProperties& prop) {
-        // TODO: we should call compute_pf and compute_pu here or create some
-        // "is_up_to_date" flag.
-        // This is actually done from the CellCostFunc classes
-        // and makes no problem so far as this property is not used elsewhere.
-    }
 
 
 } // end namespace ibex

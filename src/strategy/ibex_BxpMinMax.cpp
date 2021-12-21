@@ -31,22 +31,17 @@ namespace ibex {
 //    return _ids;
 //}
 
-    BxpMinMax::BxpMinMax(EvalMax& evalmax) : Bxp(get_id(evalmax)),
+    BxpMinMax::BxpMinMax(EvalMax& evalmax, int crit_heap) : Bxp(BxpMinMax::get_id(evalmax)),
                                              best_sol(nullptr),
-                                             y_heap_costf1(evalmax), y_heap_costf2(evalmax),
-                                             y_heap(new DoubleHeap<Cell>(y_heap_costf1, false,
-                                                                         y_heap_costf2, false)),
+                                             y_heap(evalmax,crit_heap),
                                              nb_bisect(0), pu(0), evalmax(evalmax) {
 
     }
 
     BxpMinMax::~BxpMinMax() {
-        if (y_heap != nullptr) {
 //        std::cout<<" flushing y_heap, which contains"<<y_heap->size()<< "elements"<<std::endl;
-            y_heap->flush();
+        y_heap.flush();
 //        std::cout<<"y_heap flushed"<<std::endl;
-            delete y_heap;
-        }
 //    std::cout<<"yheap flushed, delete best sol..."<<std::endl;
         delete best_sol;
     }
@@ -80,42 +75,30 @@ namespace ibex {
 //    std::cout<<"***********************"<<std::endl;
     }
 
-    std::pair<Bxp*, Bxp*> BxpMinMax::down() {
-        return {new BxpMinMax(*this), new BxpMinMax(*this)};
-    }
-
-    BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(get_id(e.evalmax)), best_sol(nullptr), y_heap(e.y_heap),
-                                               nb_bisect(e.nb_bisect), y_heap_costf1(e.y_heap_costf1), y_heap_costf2(e.y_heap_costf2),
+    BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(get_id(e.evalmax)), best_sol(nullptr), y_heap(e.y_heap,true),
+                                               nb_bisect(e.nb_bisect),
                                                pu(e.pu), evalmax(e.evalmax) {
 
     }
 
     long BxpMinMax::get_id(const EvalMax& evalmax) {
         try {
-            return ids()[evalmax.xy_sys.id];
+            return ids()[evalmax.id];
         } catch(Map<long,long,false>::NotFound&) {
             long new_id=next_id();
-            ids().insert_new(evalmax.xy_sys.id, new_id);
+            ids().insert_new(evalmax.id, new_id);
             return new_id;
         }
     }
 
 
 
-    BxpMinMaxSub::BxpMinMaxSub(const EvalMax& evalmax) : Bxp(get_id(evalmax)), pu(0), evalmax(evalmax) {
+    BxpMinMaxSub::BxpMinMaxSub(const EvalMax& evalmax) : Bxp(BxpMinMaxSub::get_id(evalmax)),pf(Interval::all_reals()), pu(0), evalmax(evalmax) {
 
     }
 
     BxpMinMaxSub::~BxpMinMaxSub() = default;
 
-
-    std::pair<Bxp*, Bxp*> BxpMinMaxSub::down() {
-        return {new BxpMinMaxSub(*this), new BxpMinMaxSub(*this)};
-    }
-
-    void BxpMinMaxSub::compute_pf(const Function& goal, const IntervalVector& box) {
-        pf=goal.eval(box);
-    }
 
     BxpMinMaxSub::BxpMinMaxSub(const BxpMinMaxSub &e) : Bxp(get_id(e.evalmax)), pf(e.pf),
                                                         pu(e.pu), evalmax(e.evalmax) {
@@ -124,12 +107,13 @@ namespace ibex {
 
     long BxpMinMaxSub::get_id(const EvalMax& evalmax) {
         try {
-            return ids()[evalmax.xy_sys.id];
+            return ids()[evalmax.id];
         } catch(Map<long,long,false>::NotFound&) {
             long new_id=next_id();
-            ids().insert_new(evalmax.xy_sys.id, new_id);
+            ids().insert_new(evalmax.id, new_id);
             return new_id;
         }
+
     }
 
 //long BxpMinMax::get_id() {
@@ -369,49 +353,4 @@ namespace ibex {
 //		map.add(new BxpMinMaxCsp(sys));
 //    }
 
-    CellCostMaxPFub_MinMax::CellCostMaxPFub_MinMax(const EvalMax& evalmax) : evalmax(evalmax) {
-
-    }
-
-    void CellCostMaxPFub_MinMax::add_property(BoxProperties& map) {
-        if (!map[BxpMinMaxSub::get_id(evalmax)])
-            map.add(new BxpMinMaxSub(evalmax));
-    }
-
-    void CellCostMaxPFub_MinMax::set_optim_data(Cell& c) {
-        ((BxpMinMaxSub*) c.prop[BxpMinMaxSub::get_id(evalmax)])->compute_pf(*evalmax.xy_sys.goal,c.box);
-    }
-
-    double CellCostMaxPFub_MinMax::cost(const Cell& c) const {
-        const BxpMinMaxSub *data = (BxpMinMaxSub*) c.prop[BxpMinMaxSub::get_id(evalmax)];
-        if (data) {
-            return -data->pf.ub();
-        } else {
-            ibex_error("CellCostMaxPFub_MinMax::cost : invalid cost");
-            return POS_INFINITY;
-        }
-    }
-
-
-    CellCostPFlb_MinMax::CellCostPFlb_MinMax(const EvalMax& evalmax) : evalmax(evalmax) {
-
-    }
-
-    void CellCostPFlb_MinMax::add_property(BoxProperties& map) {
-        if (!map[BxpMinMaxSub::get_id(evalmax)])
-            map.add(new BxpMinMaxSub(evalmax));
-    }
-
-    void CellCostPFlb_MinMax::set_optim_data(Cell& c) {
-        ((BxpMinMaxSub*) c.prop[BxpMinMaxSub::get_id(evalmax)])->compute_pf(*evalmax.xy_sys.goal,c.box);
-    }
-
-    double CellCostPFlb_MinMax::cost(const Cell& c) const {
-        const BxpMinMaxSub *data = (BxpMinMaxSub*) c.prop[BxpMinMaxSub::get_id(evalmax)];
-        if (data) {
-            return  data->pf.lb();
-        } else {
-            ibex_error("CellCostPFlb_MinMax::cost : invalid cost"); return POS_INFINITY;
-        }
-    }
 } // end namespace ibex
