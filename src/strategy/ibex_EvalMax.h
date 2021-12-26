@@ -18,6 +18,8 @@
 #include "ibex_UnconstrainedLocalSearch.h"
 #include "ibex_LargestFirst.h"
 #include "ibex_BxpMinMax.h"
+#include "ibex_ContractContext.h"
+
 //#include "ibex-affine/ibex_AffineEval.h"
 
 namespace ibex {
@@ -75,7 +77,7 @@ public:
 
 	int trace;
 	double timeout;
-	int list_elem_max;
+	unsigned int  list_elem_max;
 //	double ext_crit_prob;
 	int nb_iter;
 	double prec_y;
@@ -149,7 +151,7 @@ private:
 	 */
 	static IntervalVector init_xy_box(const IntervalVector& x_box, const IntervalVector& y_box);
 
-	bool handle_constraint( IntervalVector &xy_box, IntervalVector &y_box, BxpMinMaxSub *data_y);
+	bool handle_constraint( IntervalVector &xy_box, IntervalVector &y_box, BoxProperties& y_prop);
 	bool handle_cstfree(IntervalVector& xy_box,  IntervalVector &y_box);
 
 	/**

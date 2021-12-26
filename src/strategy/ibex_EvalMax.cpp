@@ -6,7 +6,6 @@
 #include "ibex_EvalMax.h"
 #include "ibex_Timer.h"
 #include "ibex_NoBisectableVariableException.h"
-
 using namespace std;
 namespace ibex {
 
@@ -189,8 +188,8 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 			Cell* y_cell = y_heap.pop(); // we extract an element with critprob probability to take it according to the first crit
 			current_iter++;
 
-			std::cout << *y_cell << std::endl;
-			//                                                std::cout<<"current_iter: "<<current_iter<<std::endl;
+			//     std::cout << *y_cell << std::endl;
+			//     std::cout<<"current_iter: "<<current_iter<<std::endl;
 			if ((list_elem_max != 0 && ((y_heap.size() + heap_save.size())>list_elem_max)) || (y_cell->box.max_diam())<prec_y) { // continue to evaluate cells of y_heap without increasing size of list, need to do it else nothing happend if list already reached max size
 				bool res = handle_cell(x_box, data_x, y_cell, loup);
 				if (!res) { // x_cell has been deleted
@@ -242,7 +241,7 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 			{
 				if (!y_heap.empty()) {
 					lb.push_back(data_x->fmax.lb());
-					auto top1_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap.top1()->prop[BxpMinMaxSub::get_id(*this)]);
+					BxpMinMaxSub * top1_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap.top1()->prop[BxpMinMaxSub::get_id(*this)]);
 					if (!top1_minmax)
 						ibex_error("[ibex_EvalMax] -- null ptr in eval: top1 element has no BxpMinMax.");
 					if (save_heap_ub < top1_minmax->pf.ub())
@@ -275,7 +274,7 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 			{
 				if (!y_heap.empty()) {
 					lb.push_back(data_x->fmax.lb());
-					auto top1_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap.top1()->prop[BxpMinMaxSub::get_id(*this)]);
+					BxpMinMaxSub * top1_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap.top1()->prop[BxpMinMaxSub::get_id(*this)]);
 					if (!top1_minmax)
 						ibex_error("[ibex_EvalMax] -- null ptr in eval: top1 element has no BxpMinMaxSub.");
 					if (save_heap_ub < top1_minmax->pf.ub())
@@ -334,11 +333,11 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 	//        cout<<"non empty heap"<<endl;
 
 	// Update the lower and upper bound of "max f(x,y_heap)"
-	auto top1_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap.top1()->prop[BxpMinMaxSub::get_id(*this)]);
+	BxpMinMaxSub * top1_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap.top1()->prop[BxpMinMaxSub::get_id(*this)]);
 	if (!top1_minmax)
 		ibex_error("[ibex_EvalMax] -- null ptr in eval: top1 element has no BxpMinMaxSub.");
 	double new_fmax_ub = top1_minmax->pf.ub(); // get the upper bound of max f(x,y_heap)
-	auto top2_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap.top2()->prop[BxpMinMaxSub::get_id(*this)]);
+	BxpMinMaxSub * top2_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap.top2()->prop[BxpMinMaxSub::get_id(*this)]);
 	if (!top2_minmax)
 		ibex_error("[ibex_EvalMax] -- null ptr in eval: top2 element has no BxpMinMaxSub.");
 	double new_fmax_lb = top2_minmax->pf.lb(); // get the lower bound of max f(x,y_heap)
@@ -357,7 +356,7 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 	//            std::cout<<"Issue: fmax_lb > 100,000"<<std::endl;
 
 	//        }
-	cout << "loup: " << loup << endl;
+	//cout << "loup: " << loup << endl;
 
 	//        if (csp_actif) { // if SIC, all boxes lower than  can be deleted since of no interest (verify the constraint)
 	//            y_heap.contract(loup);
@@ -400,7 +399,7 @@ bool EvalMax::handle_cell(IntervalVector& x_box, BxpMinMax* data_x , Cell* y_cel
 
 
 	if (data_y->pu != 1) { // Check constraints
-		if (handle_constraint(xy_box, y_cell->box, data_y)) {
+		if (handle_constraint(xy_box, y_cell->box, y_cell->prop)) {
 			delete y_cell;
 			return true;
 		}
@@ -632,8 +631,10 @@ IntervalVector EvalMax::init_xy_box(const IntervalVector& x_box, const IntervalV
 }
 
 
-bool EvalMax::handle_constraint( IntervalVector& xy_box, IntervalVector& y_box, BxpMinMaxSub* data_y ) {
+bool EvalMax::handle_constraint( IntervalVector& xy_box, IntervalVector& y_box, BoxProperties& y_prop ) {
 	//    cout<<"handle constraint on xy, xy init: "<<xy_box<<endl;
+
+	BxpMinMaxSub * data_y = dynamic_cast<BxpMinMaxSub *>(y_prop[BxpMinMaxSub::get_id(*this)]);
 	switch (check_constraints(xy_box)){
 	case 2: { // all the constraints are satisfied
 		data_y->pu=1;
@@ -648,7 +649,8 @@ bool EvalMax::handle_constraint( IntervalVector& xy_box, IntervalVector& y_box, 
 	}
 
 	if (data_y->pu != 1)  {// there is a constraint on x and y
-		ctc_xy.contract(xy_box);
+		ContractContext y_context(y_prop);
+		ctc_xy.contract(xy_box, y_context); // TODO regarder ce que l on peut faire avec ce context
 		if (xy_box.is_empty()) { // constraint on x and y not respected, move on.
 			return true;
 		} else {
