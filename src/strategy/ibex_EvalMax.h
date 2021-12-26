@@ -178,7 +178,7 @@ private:
     static const int default_iter;
     static const int default_prob_heap;
     static const bool default_visit_all;
-
+    static const double default_prec_y;
 	//        bool check_already_in(Cell * const y_cell, DoubleHeap<Cell> * y_heap);
 
 };

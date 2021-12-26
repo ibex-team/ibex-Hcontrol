@@ -14,17 +14,18 @@ namespace ibex {
 const double EvalMax::default_timeout = 20;
 const int EvalMax::default_prob_heap = 10 ; //10% to pop second heap in light_solver
 const double EvalMax::default_goal_abs_prec = 1e-2;
-const int EvalMax::default_iter =10;
+const int EvalMax::default_iter =100000;
 const bool EvalMax::default_visit_all = false;
-
+const double EvalMax::default_prec_y= 1.e-10;
 
 //EvalMax::EvalMax(Function &f, int nx, int ny) {}
-EvalMax::EvalMax(IntervalVector& y_box_init, System &xy_sys, Ctc &ctc_xy) : id(next_id()),
+EvalMax::EvalMax(IntervalVector& y_box_init, System &xy_sys, Ctc &ctc_xy) :
+		id(next_id()),
 		trace(false),
 		timeout(default_timeout),
 		list_elem_max(0),
 		nb_iter(default_iter),
-		prec_y(0),
+		prec_y(default_prec_y),
 		monitor(false),
 		local_search_iter(0),
 		visit_all(default_visit_all),
@@ -92,11 +93,11 @@ void EvalMax::add_property(const IntervalVector& init_box, BoxProperties& map) {
 
 Interval EvalMax::eval(IntervalVector &x, double loup) {
 	BoxProperties prop(x);
-	this->eval(x, prop, loup);
+	return this->eval(x, prop, loup);
 }
 
 Interval EvalMax::eval(Cell &x, double loup) {
-	this->eval(x.box, x.prop, loup);
+	return this->eval(x.box, x.prop, loup);
 }
 
 Interval EvalMax::eval(IntervalVector &x_box, BoxProperties &x_prop, double loup) {
@@ -187,8 +188,10 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 
 			Cell* y_cell = y_heap.pop(); // we extract an element with critprob probability to take it according to the first crit
 			current_iter++;
+
+			std::cout << *y_cell << std::endl;
 			//                                                std::cout<<"current_iter: "<<current_iter<<std::endl;
-			if ((list_elem_max != 0 && ((y_heap.size() + heap_save.size())>list_elem_max)) || (y_cell->box.size())<prec_y) { // continue to evaluate cells of y_heap without increasing size of list, need to do it else nothing happend if list already reached max size
+			if ((list_elem_max != 0 && ((y_heap.size() + heap_save.size())>list_elem_max)) || (y_cell->box.max_diam())<prec_y) { // continue to evaluate cells of y_heap without increasing size of list, need to do it else nothing happend if list already reached max size
 				bool res = handle_cell(x_box, data_x, y_cell, loup);
 				if (!res) { // x_cell has been deleted
 					return false;
@@ -227,8 +230,8 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 				catch (NoBisectableVariableException& ) {
 					bool res = handle_cell(x_box, data_x, y_cell,loup);
 
-					std::cout << *y_cell << "   " << y_heap << std::endl;
-					cout << " no bisectable caught" << endl;
+//					std::cout << *y_cell << "   " << y_heap << std::endl;
+					cout << " no bisectable caught "<<res << endl;
 
 					//                                if (res) heap_save.push_back(y_cell);
 					if (!res) return false;
@@ -667,16 +670,20 @@ bool EvalMax::handle_cstfree( IntervalVector& xy_box, IntervalVector& y_box ) {
 	//                return true;
 	IntervalVector grad(xy_box.size());
 	xy_sys.goal->gradient(xy_box,grad);
+	int k =0;
 	for (int i=xy_box.size()-y_box.size(); i<xy_box.size(); i++) {
 		//        //        std::cout<<"i = "<<i<<std::endl;
 		if (grad[i].lb() > 0) {
 			//                        (xy_box)[i] = Interval((xy_box)[i].ub() -1.e-15,(xy_box)[i].ub());
 			(xy_box)[i] = Interval((xy_box)[i].ub());
+			y_box[k] = (xy_box)[i]; //TODO to check jordan
 		}
 		if (grad[i].ub() < 0) {
 			//                        (xy_box)[i] = Interval((xy_box)[i].lb(),(xy_box)[i].lb()+1.e-15);
 			(xy_box)[i] = Interval((xy_box)[i].lb());
+			y_box[k] = (xy_box)[i]; //TODO to check jordan
 		}
+		k++;
 	}
 	//    std::cout<<"final box: "<<*xy_box<<std::endl;
 	//    std::cout<<"free cst contraction done, contracted box: "<<*xy_box<<std::endl;

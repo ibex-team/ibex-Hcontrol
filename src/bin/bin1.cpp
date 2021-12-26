@@ -31,7 +31,7 @@ int main (int argc, char *argv[]) {
 
     EvalMax ex1(y_ini,xy_sys, xy_ctc);
     ex1.timeout = 100;
-//    ex1.prec_y = y_prec;
+  //  ex1.prec_y = y_prec;
     Interval res = ex1.eval(x_sys.box);
     cout << "result: " << res << endl;
 
