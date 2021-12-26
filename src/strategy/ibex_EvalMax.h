@@ -29,7 +29,7 @@ class EvalMax  {
 public:
 
 	/* Constructor without constraint on y */
-	//        EvalMax(Function& f, int nx, int ny); TODO
+	//        EvalMax(IntervalVector& y_box_init, Function& fxy); TODO
 
 	/* Constructor with constraint */
 	EvalMax(IntervalVector& y_box_init, System& xy_sys, Ctc& ctc_xy);
@@ -55,6 +55,7 @@ public:
 	 *         -min_prec: minimum size of boxes in y_heap
 	 *         -is_midp: true if optimize run with x midpoint eval, false else
 	 * */
+	bool optimize(IntervalVector& X, BoxProperties& prop, double loup);
 	Interval eval(IntervalVector& X, double loup = POS_INFINITY);
 	Interval eval(Cell& X, double loup = POS_INFINITY);
 	Interval eval(IntervalVector& X, BoxProperties& prop, double loup = POS_INFINITY);
@@ -171,11 +172,12 @@ private:
 	static IntervalVector get_mid_y(const IntervalVector& x_box, const IntervalVector& y_box);
 
 
-	/* Default timeout */
+    //Default parameters for light optim min max solver
 	static const double default_timeout;
 	static const double default_goal_abs_prec;
-	static const int    default_prob_heap;
-
+    static const int default_iter;
+    static const int default_prob_heap;
+    static const bool default_visit_all;
 
 	//        bool check_already_in(Cell * const y_cell, DoubleHeap<Cell> * y_heap);
 

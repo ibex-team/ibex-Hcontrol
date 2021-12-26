@@ -10,19 +10,37 @@
 using namespace std;
 namespace ibex {
 
+//Default parameters for light optim min max solver
 const double EvalMax::default_timeout = 20;
+const int EvalMax::default_prob_heap = 10 ; //10% to pop second heap in light_solver
 const double EvalMax::default_goal_abs_prec = 1e-2;
-const int    EvalMax::default_prob_heap = 10; //10% to pop second heap in light_solver
+const int EvalMax::default_iter =10;
+const bool EvalMax::default_visit_all = false;
+
 
 //EvalMax::EvalMax(Function &f, int nx, int ny) {}
 EvalMax::EvalMax(IntervalVector& y_box_init, System &xy_sys, Ctc &ctc_xy) : id(next_id()),
-		trace(false), timeout(default_timeout),
-		list_elem_max(0), nb_iter(0), prec_y(0),
-		monitor(false), local_search_iter(0), xy_sys(xy_sys), goal_abs_prec(default_goal_abs_prec), ctc_xy(ctc_xy),
-		bsc(new LargestFirst()), found_point(false), time(0), best_point_eval(xy_sys.box),
-		y_box_init(y_box_init), crit_heap(default_prob_heap),
-		save_heap_ub(NEG_INFINITY), local_solver(NULL),
-		csp_actif(false) //TODO regarder a quoi ca sert
+		trace(false),
+		timeout(default_timeout),
+		list_elem_max(0),
+		nb_iter(default_iter),
+		prec_y(0),
+		monitor(false),
+		local_search_iter(0),
+		visit_all(default_visit_all),
+		xy_sys(xy_sys),
+		goal_abs_prec(default_goal_abs_prec),
+		ctc_xy(ctc_xy),
+		minus_goal_y_at_x(NULL),
+		local_solver(NULL),
+		bsc(new LargestFirst()),
+		found_point(false),
+		time(0),
+		csp_actif(false), //TODO regarder a quoi ca sert
+		best_point_eval(xy_sys.box),
+		y_box_init(y_box_init),
+		crit_heap(default_prob_heap),
+		save_heap_ub(NEG_INFINITY)
 {
 	if(xy_sys.goal !=NULL) {
 
@@ -82,6 +100,19 @@ Interval EvalMax::eval(Cell &x, double loup) {
 }
 
 Interval EvalMax::eval(IntervalVector &x_box, BoxProperties &x_prop, double loup) {
+
+	bool res =optimize(x_box, x_prop, loup);
+
+	if (res) {
+		BxpMinMax *data_x = dynamic_cast<BxpMinMax *>(x_prop[BxpMinMax::get_id(*this)]);
+		return data_x->fmax;
+	} else {
+		return Interval::empty_set();
+	}
+
+}
+
+bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup) {
 
 	add_property(x_box, x_prop);
 
@@ -195,6 +226,8 @@ Interval EvalMax::eval(IntervalVector &x_box, BoxProperties &x_prop, double loup
 				}
 				catch (NoBisectableVariableException& ) {
 					bool res = handle_cell(x_box, data_x, y_cell,loup);
+
+					std::cout << *y_cell << "   " << y_heap << std::endl;
 					cout << " no bisectable caught" << endl;
 
 					//                                if (res) heap_save.push_back(y_cell);
