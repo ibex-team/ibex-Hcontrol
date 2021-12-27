@@ -152,14 +152,14 @@ private:
 	static IntervalVector init_xy_box(const IntervalVector& x_box, const IntervalVector& y_box);
 
 	bool handle_constraint( IntervalVector &xy_box, IntervalVector &y_box, BoxProperties& y_prop);
-	bool handle_cstfree(IntervalVector& xy_box,  IntervalVector &y_box);
+	void handle_cstfree(IntervalVector& xy_box,  IntervalVector &y_box);
 
 	/**
 	 * return a feasible point in y_box w.r.t constraints on xy
 	 */
 	IntervalVector get_feasible_point(const IntervalVector& x_box, const IntervalVector& y_box, BoxProperties& y_prop);
 
-	static Interval eval_all(Function* f, const IntervalVector& box);
+//	static Interval eval_all(Function* f, const IntervalVector& box);
 
 	/**
 	 * return 0 if box is non feasible w.r.t constraints on xy, 1 if not known, 2 if box is entirely feasible

@@ -32,9 +32,11 @@ namespace ibex {
 //}
 
     BxpMinMax::BxpMinMax(EvalMax& evalmax, int crit_heap) : Bxp(BxpMinMax::get_id(evalmax)),
-                                             best_sol(nullptr),
+                                             best_sol(NULL),
                                              y_heap(evalmax,crit_heap),
-                                             nb_bisect(0), pu(0), evalmax(evalmax) {
+                                             nb_bisect(0),
+											 pu(0),
+											 evalmax(evalmax) {
 
     }
 
@@ -75,7 +77,7 @@ namespace ibex {
 //    std::cout<<"***********************"<<std::endl;
     }
 
-    BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(get_id(e.evalmax)), best_sol(nullptr), y_heap(e.y_heap,true),
+    BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(get_id(e.evalmax)), best_sol(NULL), y_heap(e.y_heap,true),
                                                nb_bisect(e.nb_bisect),
                                                pu(e.pu), evalmax(e.evalmax) {
 

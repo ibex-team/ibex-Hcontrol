@@ -1,6 +1,11 @@
-//
-// Created by joris on 17/11/2021.
-//
+//============================================================================
+//                                  I B E X
+// File        : ibex_EvalMax.cpp
+// Author      : Dominique Monnet, Jordan Ninin, Joris Tillet
+// License     : See the LICENSE file
+// Created     : Oct 1, 2021
+//============================================================================
+
 
 #include <fstream>
 #include "ibex_EvalMax.h"
@@ -58,8 +63,9 @@ EvalMax::EvalMax(IntervalVector& y_box_init, System &xy_sys, Ctc &ctc_xy) :
 
 		local_solver = new UnconstrainedLocalSearch(*minus_goal_y_at_x,IntervalVector(1));
 
+	} else {
+		ibex_error("[ibex_EvalMax] -- xy_sys must have a goal function.");
 	}
-	//        TODO check
 }
 
 EvalMax::~EvalMax() {
@@ -79,10 +85,15 @@ void EvalMax::add_property(const IntervalVector& init_box, BoxProperties& map) {
 		// add data required by the bisector
 		bsc->add_property(y_cell->box,y_cell->prop);
 		// add data required by the contractor
-		ctc_xy.add_property(y_cell->box,y_cell->prop);
+		// TODO attention on met dans y_prop des info sur xy_box(init_box|y_box_init) : ctc_xy.add_property(xy_box,y_cell->prop);
+		ctc_xy.add_property(xy_sys.box,y_cell->prop);
 		// add data required by the buffer
 		data_x->y_heap.add_property(y_cell->box,y_cell->prop);
-
+		BxpMinMaxSub * data_y = dynamic_cast<BxpMinMaxSub *>(y_cell->prop[BxpMinMaxSub::get_id(*this)]);
+		if (!data_y)
+			ibex_error("[ibex_EvalMax] -- null ptr in eval: y_cell element has no BxpMinMaxSub.");
+		else
+			data_y->pu = (xy_sys.nb_ctr==0);
 		// add the entire domain of y (i.e. y_box_init) in the y_heap
 		data_x->y_heap.push(y_cell);
 
@@ -120,7 +131,7 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 
 	found_point  = false;
 
-	csp_actif = false; // TODO
+	csp_actif = false; // TODO remove csp_actif
 
 
 	BxpMinMax *data_x = dynamic_cast<BxpMinMax *>(x_prop[BxpMinMax::get_id(*this)]);
@@ -141,7 +152,7 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 	//        //        if (!csp_actif) // no constraint if dealing with fa cst, better not use the useless contractor
 	//        //        {
 	IntervalVector xy_box = xy_box_hull(x_box);
-	ctc_xy.contract(xy_box);  // TODO utiliser des info de BoxProperty prop
+	ctc_xy.contract(xy_box);
 
 	if (xy_box.is_empty()) {
 		//                data_x->clear_fsbl_list(); // need to delete elements of fsbl_point_list since this branch is closed and they will not be needed later
@@ -154,7 +165,7 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 	if (local_search_iter>0)      {
 		double lower_bound_ls = local_search_process(x_box, xy_box, loup);
 		if (lower_bound_ls > data_x->fmax.ub()) {
-			ibex_error("ibex_EvalMaxMax: error, lb >ub from local search. Please report this bug."); // TODO ibex_LightOptimMinMax -> ibex_EvalMax
+			ibex_error("[ibex_EvalMax] -- error, lb >ub from local search. Please report this bug."); // TODO ibex_LightOptimMinMax -> ibex_EvalMax
 		}
 		//            cout<<"local optim return new lb: "<< lower_bound_ls<<endl;
 		if (lower_bound_ls > loup) {
@@ -206,14 +217,14 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 					//                                                                std::cout<<"first cell handled"<<std::endl;
 					if (!res) { // x_cell has been deleted
 						delete subcells_pair.second;
-						//                                                                                std::cout <<"       OUT 1 "<<std::endl;
+						//                                                            std::cout <<"       OUT 1 "<<std::endl;
 						return false;
 					}
 					//                                                                std::cout<<"handle second cell in light optim"<<std::endl;
 					res = handle_cell( x_box, data_x, subcells_pair.second,loup);
 					//                                                                std::cout<<"second cell handled"<<std::endl;
 					if (!res) { // x_cell has been deleted
-						//                                                                                std::cout <<"       OUT 2 "<<std::endl;
+						//                                                            std::cout <<"       OUT 2 "<<std::endl;
 						return false;
 					}
 
@@ -232,7 +243,7 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 //					std::cout << *y_cell << "   " << y_heap << std::endl;
 					cout << " no bisectable caught "<<res << endl;
 
-					//                                if (res) heap_save.push_back(y_cell);
+					//if (res) heap_save.push_back(y_cell); // TODO Jordan : to check
 					if (!res) return false;
 
 				}
@@ -321,14 +332,15 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 
 
 	if (y_heap.empty()) {
-		cout <<"       OUT 3 "<< endl;
+		cout <<"   WARNING    OUT 3 "<< endl;
 		//            data_x->clear_fsbl_list(); // need to delete elements of fsbl_point_list since this branch is closed and they will not be needed later
 		//            delete x_cell;
 		//            if (csp_actif) // sic case: empty set y means that the set defined by the constraints g(x,y)<0 is empty, and therefore that the sic is respected over the empty set
 		//                return true;
 		//            else
 		//                return false; // minmax case: empty set means ????? suppose that x can be discarded????
-		return csp_actif;
+		//return csp_actif;
+		return true; //TODO ce cas ne doit pas se produire
 	}
 	//        cout<<"non empty heap"<<endl;
 
@@ -345,7 +357,7 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 	//std::cout<<"new_fmax_ub: "<<new_fmax_ub<<std::endl<<"new_fmax_lb: "<<new_fmax_lb<<std::endl<<"fmax_lb (from found point): "<<data_x->fmax.lb()<<std::endl;
 
 	if (new_fmax_ub< new_fmax_lb) {
-		ibex_error("ibex_LightOptimMinMax: error, please report this bug.");
+		ibex_error("[ibex_EvalMax] --  error, please report this bug.");
 	}
 
 	//                std::cout<<"fmax ini: "<<data_x->fmax<<std::endl;
@@ -415,7 +427,7 @@ bool EvalMax::handle_cell(IntervalVector& x_box, BxpMinMax* data_x , Cell* y_cel
 
 		// x y constraint respected for all x and mid(y), mid_y_box is a candidate for evaluation
 		//                Interval midres = xy_sys.goal->eval_baumann(mid_y_box);
-		Interval midres = eval_all(xy_sys.goal, mid_y_box);
+		Interval midres = xy_sys.goal->eval(mid_y_box);
 		//                cout<<"midp: "<<mid_y_box<<", eval = "<<midres<<endl;
 		if (loup < midres.lb()) {  // midres.lb()> best_max ->is now false since fmax.ub() unchanged in
 			// there exists y such as constraint is respected and f(x,y)>best max, the max on x will be worst than the best known solution
@@ -470,7 +482,8 @@ bool EvalMax::handle_cell(IntervalVector& x_box, BxpMinMax* data_x , Cell* y_cel
 
 	// Update the lower and upper bound on y
 	//data_y->pf &= xy_sys.goal->eval_baumann(xy_box); // objective function evaluation
-	if (eval_all(xy_sys.goal,xy_box).ub()>data_y->pf.ub()) {
+	Interval tmp_eval_goal = xy_sys.goal->eval(xy_box);
+	if (tmp_eval_goal.ub()>data_y->pf.ub()) {
 		cout<<" ************************** CRITICAL ISSUE *******************"<<endl;
 		cout<<" get worst upper bound, should not happen due to monotonicity of ifunc"<<endl;
 		cout<<"***************************************************************"<<endl;
@@ -478,7 +491,7 @@ bool EvalMax::handle_cell(IntervalVector& x_box, BxpMinMax* data_x , Cell* y_cel
 
 	//        cout<<"    dealing with box: "<<xy_box<<endl;
 	//        cout<<"    previous value of pf:  "<<data_y->pf<<endl;
-	data_y->pf &= eval_all(xy_sys.goal,xy_box);
+	data_y->pf &= tmp_eval_goal;
 	//        cout<<"    eval res: "<<eval_all(xy_sys.goal,xy_box)<<endl;
 	//        cout<<"    new value of pf: "<<data_y->pf<<endl;
 	if (data_y->pf.is_empty() || data_x->fmax.lb() > data_y->pf.ub()) {  // y_box cannot contains max f(x,y)
@@ -555,7 +568,7 @@ double EvalMax::local_search_process(const IntervalVector& x_box, const Interval
 		if (check_constraints(xy_box) == 2) // y_max must respect constraints
 		{
 			//            Interval eval = xy_sys.goal->eval_baumann(xy_box_eval); // eval objective function at (x_box,y_max)
-			Interval eval = eval_all(xy_sys.goal, xy_box_eval);
+			Interval eval = xy_sys.goal->eval(xy_box_eval);
 			//            cout<<"local optim solution: "<<xy_box_eval<<" objectif eval at solution: "<<eval<<endl;
 			res &= Interval(eval.lb(), POS_INFINITY); // update greatest lower bound
 
@@ -635,19 +648,20 @@ bool EvalMax::handle_constraint( IntervalVector& xy_box, IntervalVector& y_box, 
 	//    cout<<"handle constraint on xy, xy init: "<<xy_box<<endl;
 
 	BxpMinMaxSub * data_y = dynamic_cast<BxpMinMaxSub *>(y_prop[BxpMinMaxSub::get_id(*this)]);
-	switch (check_constraints(xy_box)){
-	case 2: { // all the constraints are satisfied
-		data_y->pu=1;
-		break;
+	if (data_y->pu != 1)  {
+		switch (check_constraints(xy_box)){
+		case 2: { // all the constraints are satisfied
+			data_y->pu=1;
+			break;
+		}
+		case 0: { // One constraint is false
+			// constraint on x and y not respected, move on.
+			return true;
+		}
+		default: // nothing to do
+			break;
+		}
 	}
-	case 0: { // One constraint is false
-		// constraint on x and y not respected, move on.
-		return true;
-	}
-	default: // nothing to do
-		break;
-	}
-
 	if (data_y->pu != 1)  {// there is a constraint on x and y
 		ContractContext y_context(y_prop);
 		ctc_xy.contract(xy_box, y_context); // TODO regarder ce que l on peut faire avec ce context
@@ -661,12 +675,14 @@ bool EvalMax::handle_constraint( IntervalVector& xy_box, IntervalVector& y_box, 
 				y_box[k] &= xy_box[xy_box.size()-y_box.size()+k];
 			}
 		}
+	} else {
+		handle_cstfree(xy_box,y_box);
 	}
 	return false;
 }
 
 
-bool EvalMax::handle_cstfree( IntervalVector& xy_box, IntervalVector& y_box ) {
+void EvalMax::handle_cstfree( IntervalVector& xy_box, IntervalVector& y_box ) {
 	//    std::cout<<"init box: "<<*xy_box<<std::endl;
 	//        if((xy_box.subvector(xy_box.size()-y_cell->box.size(), xy_box.size()-1)).max_diam()<=1.e-14)
 	//                return true;
@@ -677,19 +693,19 @@ bool EvalMax::handle_cstfree( IntervalVector& xy_box, IntervalVector& y_box ) {
 		//        //        std::cout<<"i = "<<i<<std::endl;
 		if (grad[i].lb() > 0) {
 			//                        (xy_box)[i] = Interval((xy_box)[i].ub() -1.e-15,(xy_box)[i].ub());
-			(xy_box)[i] = Interval((xy_box)[i].ub());
+			xy_box[i] = Interval((xy_box)[i].ub());
 			y_box[k] = (xy_box)[i]; //TODO to check jordan
 		}
 		if (grad[i].ub() < 0) {
 			//                        (xy_box)[i] = Interval((xy_box)[i].lb(),(xy_box)[i].lb()+1.e-15);
-			(xy_box)[i] = Interval((xy_box)[i].lb());
+			xy_box[i] = Interval((xy_box)[i].lb());
 			y_box[k] = (xy_box)[i]; //TODO to check jordan
 		}
 		k++;
 	}
 	//    std::cout<<"final box: "<<*xy_box<<std::endl;
 	//    std::cout<<"free cst contraction done, contracted box: "<<*xy_box<<std::endl;
-	return true;
+	//return true;
 }
 
 IntervalVector EvalMax::get_feasible_point(const IntervalVector& x_box, const IntervalVector& y_box, BoxProperties& y_prop){
@@ -701,40 +717,56 @@ IntervalVector EvalMax::get_feasible_point(const IntervalVector& x_box, const In
 	if ((y_data->pu != 1)) { // constraint on xy exist and is not proved to be satisfied
 		int res = check_constraints(mid_y_box);
 		if (res == 0 ||res == 1)
-			return {1, Interval::EMPTY_SET};
+			return IntervalVector::empty(1);
 	}
 	return mid_y_box;
 }
-
-Interval EvalMax::eval_all(Function* f, const IntervalVector& box) {
-	Interval eval = f->eval(box);
-	//    cout<<"natural eval: "<<eval<<endl;
-	//    Interval eval_centered =  f->eval_centered(box);
-	//    cout<<"centered eval: "<<eval_centered<<endl;
-	//    Interval eval_baumann = f->eval_baumann(box);
-	//    cout<<"baumann eval: "<<eval_baumann<<endl;
-	//    eval &= eval_centered;
-	//    eval &= eval_baumann;
-	//    cout<<"eval intersect: "<<eval<<endl;
-	//    return eval_baumann;
-	//     Interval itv = affine_goal->eval(box).i();
-	return eval;
-	//     return itv;
-}
+//
+//Interval EvalMax::eval_all(Function* f, const IntervalVector& box) {
+//	Interval eval = f->eval(box);
+//	//    cout<<"natural eval: "<<eval<<endl;
+//	//    Interval eval_centered =  f->eval_centered(box);
+//	//    cout<<"centered eval: "<<eval_centered<<endl;
+//	//    Interval eval_baumann = f->eval_baumann(box);
+//	//    cout<<"baumann eval: "<<eval_baumann<<endl;
+//	//    eval &= eval_centered;
+//	//    eval &= eval_baumann;
+//	//    cout<<"eval intersect: "<<eval<<endl;
+//	//    return eval_baumann;
+//	//     Interval itv = affine_goal->eval(box).i();
+//	return eval;
+//	//     return itv;
+//}
 
 
 int EvalMax::check_constraints(const IntervalVector& xy_box) {
-	int res = 2;
-
-	for (int i=0; i<xy_sys.nb_ctr; i++) {
-		Interval int_res = eval_all(const_cast<Function *>(&(xy_sys.ctrs[i].f)), xy_box);
-		//            cout<<" val of ctr "<<i<<" : "<<int_res<<endl;
-		if (int_res.lb() > 0)
+	int out = 2;
+	bool toto= true;
+	IntervalVector res = xy_sys.f_ctrs.eval_vector(xy_box);
+	bool val;
+	for (int c=0; c<xy_sys.f_ctrs.image_dim(); c++) {
+		switch (xy_sys.ops[c]) {
+		case LT:  val=res[c].lb()>0; break;
+		case LEQ: val=res[c].lb()>0; break;
+		case EQ:  val=(!res[c].contains(0)); break;
+		case GEQ: val=res[c].ub()<0; break;
+		case GT:  val=res[c].ub()<0; break;
+		}
+		if (val)
 			return 0;
-		else if (int_res.ub() >= 0)
-			res = 1;
+		else if (toto) {
+			switch (xy_sys.ops[c]) {
+			case LT:  val=res[c].ub()>=0; break;
+			case LEQ: val=res[c].ub()>0; break;
+			case EQ:  val=res[c]!=Interval::zero(); break;
+			case GEQ: val=res[c].lb()<0; break;
+			case GT:  val=res[c].lb()<=0; break;
+			}
+			toto = false;
+			out = 1;
+		}
 	}
-	return res;
+	return out;
 }
 
 IntervalVector EvalMax::get_mid_y(const IntervalVector& x_box, const IntervalVector& y_box) { // returns the cast of box x and mid of box y
