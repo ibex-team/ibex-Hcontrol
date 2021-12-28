@@ -53,14 +53,14 @@ public:
 
 
 	/**
-	 * \brief Casado criterion
+	 * \brief Value of "max f(x,y)"
 	 *
 	 * Image of the objective on the current box
 	 */
 	Interval pf;
 
 	/**
-	 * \brief Casado criterion
+	 * \brief to know if  all constraints are satisfed
 	 *
 	 * Constraint factor of the current box : between 0 infeasible and 1 for all constraints satisfied.
 	 */
@@ -98,7 +98,7 @@ inline void BxpMinMaxSub::update(const BoxEvent& event, const BoxProperties& pro
 
 
 
-
+// Cost function to sort the heap with the Maximum of the value of "pf.ub()"
 class CellCostMaxPFub_MinMax: public CostFunc<Cell> {
 public:
 	explicit CellCostMaxPFub_MinMax(const EvalMax& evalmax);
@@ -107,11 +107,6 @@ public:
 	 * \brief Add BxpData
 	 */
 	virtual void add_property(BoxProperties& map);
-
-	//        /**
-	//         * \brief Set "pf" in BxpData in the cell
-	//         */
-	//        virtual void set_optim_data(Cell& c);
 
 	/** The "cost" of a element. */
 	virtual	double cost(const Cell& c) const;
@@ -127,6 +122,7 @@ protected:
 
 
 
+// Cost function to sort the heap with the Minimum of the value of "pf.lb()"
 class CellCostPFlb_MinMax: public CostFunc<Cell> {
 public:
 	CellCostPFlb_MinMax(const EvalMax& evalmax);
@@ -135,11 +131,7 @@ public:
 	 * \brief Add BxpData
 	 */
 	virtual void add_property(BoxProperties& map);
-	//
-	//        /**
-	//         * \brief Set "pf" in BxpData in the cell
-	//         */
-	//        virtual void set_optim_data(Cell& c);
+
 
 	/** The "cost" of a element. */
 	virtual	double cost(const Cell& c) const;

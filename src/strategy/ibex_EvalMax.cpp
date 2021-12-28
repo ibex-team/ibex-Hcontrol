@@ -148,27 +148,28 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 	Timer timer;
 	time = timer.get_time();
 	//
-	//        // ********** contract x_box with ctc_xy***************
-	//        //        if (!csp_actif) // no constraint if dealing with fa cst, better not use the useless contractor
-	//        //        {
+	// ********** contract x_box with ctc_xy***************
 	IntervalVector xy_box = xy_box_hull(x_box);
 	ctc_xy.contract(xy_box);
 
 	if (xy_box.is_empty()) {
-		//                data_x->clear_fsbl_list(); // need to delete elements of fsbl_point_list since this branch is closed and they will not be needed later
-		//                delete x_cell;
+		// data_x->clear_fsbl_list(); // need to delete elements of fsbl_point_list since this branch is closed and they will not be needed later
+		// delete x_cell;
 		return false;
 	} else {
 		// contract the result on x
 		x_box &= xy_box.subvector(0, x_box.size()-1);
 	}
-	if (local_search_iter>0)      {
+	// ********************************************************
+
+	// *********** recherche local sur les y pour ameliorer data_x->fmax.lb ****************
+	if (local_search_iter>0)   {
 		double lower_bound_ls = local_search_process(x_box, xy_box, loup);
 		if (lower_bound_ls > data_x->fmax.ub()) {
 			ibex_error("[ibex_EvalMax] -- error, lb >ub from local search. Please report this bug."); // TODO ibex_LightOptimMinMax -> ibex_EvalMax
 		}
 		//            cout<<"local optim return new lb: "<< lower_bound_ls<<endl;
-		if (lower_bound_ls > loup) {
+		if (lower_bound_ls > loup) {// ca veut dire que data_x->fmax sera superieur a loup
 			//                data_x->clear_fsbl_list(); // need to delete elements of fsbl_point_list since this branch is closed and they will not be needed later
 			//                delete x_cell;
 			return false;
@@ -177,6 +178,7 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 			data_x->fmax &= Interval(lower_bound_ls, POS_INFINITY); // update lower bound on fmax // @suppress("Function cannot be resolved")
 		}
 	}
+	// *************************************************************************************
 
 
 	//monitoring variables, used to track upper bound, lower bound, number of elem in y_heap and heap_save at each iteration
@@ -212,44 +214,45 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 				try {
 					pair<Cell*,Cell*> subcells_pair = bsc->bisect(*y_cell);// bisect tmp_cell into 2 subcells
 					delete y_cell;
-					//                                                                std::cout<<"handle first cell in light optim"<<std::endl;
+					// std::cout<<"handle first cell in light optim"<<std::endl;
 					bool res = handle_cell(x_box, data_x, subcells_pair.first, loup);
-					//                                                                std::cout<<"first cell handled"<<std::endl;
+					// std::cout<<"first cell handled"<<std::endl;
 					if (!res) { // x_cell has been deleted
 						delete subcells_pair.second;
-						//                                                            std::cout <<"       OUT 1 "<<std::endl;
+						//  std::cout <<"       OUT 1 "<<std::endl;
 						return false;
 					}
-					//                                                                std::cout<<"handle second cell in light optim"<<std::endl;
+					// std::cout<<"handle second cell in light optim"<<std::endl;
 					res = handle_cell( x_box, data_x, subcells_pair.second,loup);
-					//                                                                std::cout<<"second cell handled"<<std::endl;
+					// std::cout<<"second cell handled"<<std::endl;
 					if (!res) { // x_cell has been deleted
-						//                                                            std::cout <<"       OUT 2 "<<std::endl;
+						//  std::cout <<"       OUT 2 "<<std::endl;
 						return false;
 					}
 
-					//                                if (found_point && !csp_actif) { // a feasible solution has been found
-					//                                    y_heap.contract(-(data_x->fmax.lb())); // to check
 
-					//                                }
+					// TODO Il serait interressant de eliminer de y_heap tous les elements inutiles , voir la these de Dominique
+					//  if (found_point && !csp_actif) { // a feasible solution has been found
+					//      y_heap.contract(-(data_x->fmax.lb())); // to check
+					//    }
 					// ** contract not yet
 					//if (found_point) { // a feasible solution has been found
-					//	y_heap.contract(-(data_x->fmax.lb())); // to check
+					//	y_heap.contract(-(data_x->fmax.lb())); // TODO  to check
 					//}
 				}
 				catch (NoBisectableVariableException& ) {
 					bool res = handle_cell(x_box, data_x, y_cell,loup);
 
-//					std::cout << *y_cell << "   " << y_heap << std::endl;
-					cout << " no bisectable caught "<<res << endl;
+					//std::out << *y_cell << "   " << y_heap << std::endl;
+					//cout << " no bisectable caught "<<res << endl;
 
 					//if (res) heap_save.push_back(y_cell); // TODO Jordan : to check
 					if (!res) return false;
 
 				}
 			}
-			if (monitor)
-			{
+			///////////////////////////////
+			if (monitor) {
 				if (!y_heap.empty()) {
 					lb.push_back(data_x->fmax.lb());
 					BxpMinMaxSub * top1_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap.top1()->prop[BxpMinMaxSub::get_id(*this)]);
@@ -263,7 +266,9 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 					nbel_save.push_back(heap_save.size());
 				}
 			}
-			//                                                std::cout<<"nb iter: "<<current_iter<<std::endl;
+			///////////////////////////
+
+			// std::cout<<"nb iter: "<<current_iter<<std::endl;
 			timer.check(time+timeout);
 
 		}
@@ -271,9 +276,8 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 	}
 	catch (TimeOutException& ) { }
 
-	//        cout<<"visit all, y_heap size: "<<y_heap.size()<<endl;
-	//force visit of all elements of the heap
-	//        cout<<"visit all = "<<visit_all<<endl;
+
+	//  force visit of all elements of the heap
 	if (visit_all) {
 		//            cout<<"             y_heap detail: "<<endl;
 		while (!y_heap.empty()) {
@@ -281,8 +285,9 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 			//                cout<<"                 "<<y_cell->box<<endl;
 			bool res = handle_cell(x_box, data_x, y_cell, loup, true);
 			if (!res) return false;
-			if (monitor)
-			{
+
+			///////////////////////////////
+			if (monitor) {
 				if (!y_heap.empty()) {
 					lb.push_back(data_x->fmax.lb());
 					BxpMinMaxSub * top1_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap.top1()->prop[BxpMinMaxSub::get_id(*this)]);
@@ -296,7 +301,9 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 					nbel_save.push_back(heap_save.size());
 				}
 			}
+			//////////////////////////////
 		}
+
 	}
 	//        cout<<"all eval done"<<endl;
 	//        cout<<"out of loop"<<endl;
@@ -317,6 +324,8 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 	fill_y_heap(y_heap);
 	//        cout<<"heap filled"<<endl;
 
+
+	// TODO Il serait interressant de eliminer de y_heap tous les elements inutiles , voir la these de Dominique
 	//if (found_point) { // a feasible solution has been found
 	//        if (!csp_actif)
 	//            y_heap.contract(-(data_x->fmax.lb())); // to check
@@ -331,8 +340,8 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 	//        std::cout<<"found point pass"<<std::endl;
 
 
-	if (y_heap.empty()) {
-		cout <<"   WARNING    OUT 3 "<< endl;
+	if (y_heap.empty()) {// cela veut dire que y_box_init ne verifie pas les contraintes
+		//cout <<"   WARNING    OUT 3 "<< endl;
 		//            data_x->clear_fsbl_list(); // need to delete elements of fsbl_point_list since this branch is closed and they will not be needed later
 		//            delete x_cell;
 		//            if (csp_actif) // sic case: empty set y means that the set defined by the constraints g(x,y)<0 is empty, and therefore that the sic is respected over the empty set
@@ -340,11 +349,11 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 		//            else
 		//                return false; // minmax case: empty set means ????? suppose that x can be discarded????
 		//return csp_actif;
-		return true; //TODO ce cas ne doit pas se produire
+		return false;
 	}
 	//        cout<<"non empty heap"<<endl;
 
-	// Update the lower and upper bound of "max f(x,y_heap)"
+	// ********** Update the lower and upper bound of "max f(x,y_heap)"  **********************
 	BxpMinMaxSub * top1_minmax = dynamic_cast<BxpMinMaxSub *>(y_heap.top1()->prop[BxpMinMaxSub::get_id(*this)]);
 	if (!top1_minmax)
 		ibex_error("[ibex_EvalMax] -- null ptr in eval: top1 element has no BxpMinMaxSub.");
@@ -354,44 +363,38 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 		ibex_error("[ibex_EvalMax] -- null ptr in eval: top2 element has no BxpMinMaxSub.");
 	double new_fmax_lb = top2_minmax->pf.lb(); // get the lower bound of max f(x,y_heap)
 
-	//std::cout<<"new_fmax_ub: "<<new_fmax_ub<<std::endl<<"new_fmax_lb: "<<new_fmax_lb<<std::endl<<"fmax_lb (from found point): "<<data_x->fmax.lb()<<std::endl;
 
 	if (new_fmax_ub< new_fmax_lb) {
 		ibex_error("[ibex_EvalMax] --  error, please report this bug.");
 	}
 
-	//                std::cout<<"fmax ini: "<<data_x->fmax<<std::endl;
 	data_x->fmax &= Interval(new_fmax_lb, new_fmax_ub);
-	//                std::cout<<"new_fmax_lb: "<<new_fmax_lb<<" new_fmax_ub: "<<new_fmax_ub<<std::endl;
-	//                std::cout<<"       fmax final: "<<data_x->fmax<<std::endl;
-	//        if (data_x->fmax.lb()>100000){
-	//            std::cout<<"Issue: fmax_lb > 100,000"<<std::endl;
+	//************************************************************************************
 
-	//        }
-	//cout << "loup: " << loup << endl;
-
+	// TODO Il serait interressant de eliminer de y_heap tous les elements inutiles , voir la these de Dominique
 	//        if (csp_actif) { // if SIC, all boxes lower than  can be deleted since of no interest (verify the constraint)
 	//            y_heap.contract(loup);
 	//            if (y_heap.empty())
 	//                cout<<" y_heap empty after loup contraction"<<endl;
 	//        }
 
-	if (data_x->fmax.is_empty() || data_x->fmax.lb() > loup) {
-		//                                std::cout <<"       OUT 4 "<<std::endl;
-		//                data_x->clear_fsbl_list(); // need to delete elements of fsbl_point_list since this branch is closed and they will not be needed later
-		//                delete x_cell;
+	if (data_x->fmax.is_empty() || data_x->fmax.lb() > loup) {  // on ne peut pas trouver mieux que "loup"
+		//     std::cout <<"       OUT 4 "<<std::endl;
+		//     data_x->clear_fsbl_list(); // need to delete elements of fsbl_point_list since this branch is closed and they will not be needed later
+		//      delete x_cell;
 		return false;
 	}
 
-
-	if (monitor)
-	{
+	///////////////////////////////
+	if (monitor) {
 		lb.push_back(data_x->fmax.lb());
 		ub.push_back(data_x->fmax.ub());
 		nbel.push_back(y_heap.size());
 		nbel_save.push_back(heap_save.size());
 		export_monitor(&ub, &lb, &nbel, &nbel_save, x_box); // TODO
 	}
+	///////////////////////////////
+
 	best_point_eval = xy_box.mid();
 	for(int i=0;i<xy_sys.box.size()-x_box.size();i++) {
 		best_point_eval[x_box.size()+i] = y_heap.top1()->box[i].mid();
@@ -401,6 +404,7 @@ bool EvalMax::optimize(IntervalVector &x_box, BoxProperties &x_prop, double loup
 	return true;
 }
 
+//TODO to continue
 
 bool EvalMax::handle_cell(IntervalVector& x_box, BxpMinMax* data_x , Cell* y_cell, double loup, bool no_stack) {
 
@@ -519,7 +523,7 @@ bool EvalMax::handle_cell(IntervalVector& x_box, BxpMinMax* data_x , Cell* y_cel
 	}
 	else {
 		if (!no_stack) {
-			//                check_already_in(y_cell,data_x->y_heap);
+			//   check_already_in(y_cell,data_x->y_heap);
 			data_x->y_heap.push(y_cell);
 		}
 		else
@@ -741,29 +745,31 @@ IntervalVector EvalMax::get_feasible_point(const IntervalVector& x_box, const In
 
 int EvalMax::check_constraints(const IntervalVector& xy_box) {
 	int out = 2;
-	bool toto= true;
-	IntervalVector res = xy_sys.f_ctrs.eval_vector(xy_box);
-	bool val;
-	for (int c=0; c<xy_sys.f_ctrs.image_dim(); c++) {
-		switch (xy_sys.ops[c]) {
-		case LT:  val=res[c].lb()>0; break;
-		case LEQ: val=res[c].lb()>0; break;
-		case EQ:  val=(!res[c].contains(0)); break;
-		case GEQ: val=res[c].ub()<0; break;
-		case GT:  val=res[c].ub()<0; break;
-		}
-		if (val)
-			return 0;
-		else if (toto) {
+	if (xy_sys.nb_ctr>0) {
+		bool toto= true;
+		IntervalVector res = xy_sys.f_ctrs.eval_vector(xy_box);
+		bool val;
+		for (int c=0; c<xy_sys.f_ctrs.image_dim(); c++) {
 			switch (xy_sys.ops[c]) {
-			case LT:  val=res[c].ub()>=0; break;
-			case LEQ: val=res[c].ub()>0; break;
-			case EQ:  val=res[c]!=Interval::zero(); break;
-			case GEQ: val=res[c].lb()<0; break;
-			case GT:  val=res[c].lb()<=0; break;
+			case LT:  val=res[c].lb()>0; break;
+			case LEQ: val=res[c].lb()>0; break;
+			case EQ:  val=(!res[c].contains(0)); break;
+			case GEQ: val=res[c].ub()<0; break;
+			case GT:  val=res[c].ub()<0; break;
 			}
-			toto = false;
-			out = 1;
+			if (val)
+				return 0;
+			else if (toto) {
+				switch (xy_sys.ops[c]) {
+				case LT:  val=res[c].ub()>=0; break;
+				case LEQ: val=res[c].ub()>0; break;
+				case EQ:  val=res[c]!=Interval::zero(); break;
+				case GEQ: val=res[c].lb()<0; break;
+				case GT:  val=res[c].lb()<=0; break;
+				}
+				toto = false;
+				out = 1;
+			}
 		}
 	}
 	return out;
