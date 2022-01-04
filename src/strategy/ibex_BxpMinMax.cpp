@@ -7,124 +7,120 @@
 namespace ibex {
 
 
-    feasible_point::feasible_point(const Vector& box,const Interval& eval) : point(box), eval(eval) {}
-    feasible_point::feasible_point(const feasible_point& pt) = default;
-    feasible_point::~feasible_point() = default;
-
-    Map<long,long,false>& BxpMinMax::ids() {
-        static Map<long,long,false> _ids;
-        return _ids;
-    }
-
-    Map<long,long,false>& BxpMinMaxSub::ids() {
-        static Map<long,long,false> _ids;
-        return _ids;
-    }
-
-//Map<long,long,false>& BxpMinMaxOpti::ids() {
-//    static Map<long,long,false> _ids;
-//    return _ids;
-//}
-//
-//Map<long,long,false>& BxpMinMaxCsp::ids() {
-//    static Map<long,long,false> _ids;
-//    return _ids;
-//}
-
-    BxpMinMax::BxpMinMax(EvalMax& evalmax, int crit_heap) : Bxp(BxpMinMax::get_id(evalmax)),
-                                             best_sol(NULL),
-                                             y_heap(evalmax,crit_heap),
-                                             nb_bisect(0),
-											 pu(0),
-											 evalmax(evalmax) {
-
-    }
-
-    BxpMinMax::~BxpMinMax() {
-//        std::cout<<" flushing y_heap, which contains"<<y_heap->size()<< "elements"<<std::endl;
-        y_heap.flush();
-//        std::cout<<"y_heap flushed"<<std::endl;
-//    std::cout<<"yheap flushed, delete best sol..."<<std::endl;
-        delete best_sol;
-    }
+feasible_point::feasible_point(const Vector& box,const Interval& eval) : point(box), eval(eval) { }
+feasible_point::feasible_point(const feasible_point& pt) : point(pt.point), eval(pt.eval) { }
 
 
-    void BxpMinMax::clear_fsbl_list() {
-        fsbl_pt_list.clear();
-    }
+Map<long,long,false>& BxpMinMax::ids() {
+	static Map<long,long,false> _ids;
+	return _ids;
+}
 
-    void BxpMinMax::clear_notin_point(const IntervalVector &x_box, bool strong_del) {
-        int size = fsbl_pt_list.size();
-        std::vector<feasible_point> save_vect;
-//    std::cout<<"======================= "<<std::endl;
-//    std::cout<<" check in box: "<<x_box<<std::endl;
-        for(int i=0;i<size;i++) {
-            feasible_point pt = fsbl_pt_list.back();
-            fsbl_pt_list.pop_back();
-//        std::cout<<" feas pt "<<pt->point<<std::endl;
-            if((x_box.contains(pt.point.subvector(0,x_box.size()-1)))) {
-//            if(strong_del)
-//                delete pt;
-                save_vect.push_back(pt);
-//            std::cout<<"      is deleted"<<std::endl;
-            }
-//        else {
-//            std::cout<<"      is NOT deleted"<<std::endl;
+Map<long,long,false>& BxpMinMaxSub::ids() {
+	static Map<long,long,false> _ids;
+	return _ids;
+}
 
-//        }
-        }
-        fsbl_pt_list = save_vect;
-//    std::cout<<"***********************"<<std::endl;
-    }
 
-    BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(get_id(e.evalmax)), best_sol(NULL), y_heap(e.y_heap,true),
-                                               nb_bisect(e.nb_bisect),
-                                               pu(e.pu), evalmax(e.evalmax) {
+BxpMinMax::BxpMinMax(EvalMax& evalmax, int crit_heap) : Bxp(BxpMinMax::get_id(evalmax)),
+		best_sol(NULL),
+		y_heap(evalmax,crit_heap),
+		nb_bisect(0),
+		pu(0),
+		evalmax(evalmax) {
 
-    }
+}
 
-    long BxpMinMax::get_id(const EvalMax& evalmax) {
-        try {
-            return ids()[evalmax.id];
-        } catch(Map<long,long,false>::NotFound&) {
-            long new_id=next_id();
-            ids().insert_new(evalmax.id, new_id);
-            return new_id;
-        }
-    }
+BxpMinMax::~BxpMinMax() {
+	y_heap.flush();
+	delete best_sol;
+}
+
+
+void BxpMinMax::clear_fsbl_list() {
+	fsbl_pt_list.clear();
+}
+
+void BxpMinMax::clear_notin_point(const IntervalVector &x_box, bool strong_del) {
+	int size = fsbl_pt_list.size();
+	std::vector<feasible_point> save_vect;
+	//    std::cout<<"======================= "<<std::endl;
+	//    std::cout<<" check in box: "<<x_box<<std::endl;
+	for(int i=0;i<size;i++) {
+		feasible_point pt = fsbl_pt_list.back();
+		fsbl_pt_list.pop_back();
+		//        std::cout<<" feas pt "<<pt->point<<std::endl;
+		if((x_box.contains(pt.point.subvector(0,x_box.size()-1)))) {
+			//            if(strong_del)
+			//                delete pt;
+			save_vect.push_back(pt);
+			//            std::cout<<"      is deleted"<<std::endl;
+		}
+		//        else {
+		//            std::cout<<"      is NOT deleted"<<std::endl;
+
+		//        }
+	}
+	fsbl_pt_list = save_vect;
+	//    std::cout<<"***********************"<<std::endl;
+}
+
+BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(get_id(e.evalmax)),
+		fmax(e.fmax),
+		best_sol(NULL),
+		y_heap(e.y_heap,true),
+		nb_bisect(e.nb_bisect+1),
+		pu(e.pu),
+		evalmax(e.evalmax)
+ {
+	if (!e.best_sol) {
+		best_sol = new IntervalVector(*e.best_sol);
+	}
+
+}
+
+long BxpMinMax::get_id(const EvalMax& evalmax) {
+	try {
+		return ids()[evalmax.id];
+	} catch(Map<long,long,false>::NotFound&) {
+		long new_id=next_id();
+		ids().insert_new(evalmax.id, new_id);
+		return new_id;
+	}
+}
 
 
 
-    BxpMinMaxSub::BxpMinMaxSub(const EvalMax& evalmax) : Bxp(BxpMinMaxSub::get_id(evalmax)),pf(Interval::all_reals()), pu(0), evalmax(evalmax) {
+BxpMinMaxSub::BxpMinMaxSub(const EvalMax& evalmax) : Bxp(BxpMinMaxSub::get_id(evalmax)),maxfxy(Interval::all_reals()), feasible(0), evalmax(evalmax) {
 
-    }
+}
 
-    BxpMinMaxSub::~BxpMinMaxSub() = default;
+BxpMinMaxSub::~BxpMinMaxSub() = default;
 
 
-    BxpMinMaxSub::BxpMinMaxSub(const BxpMinMaxSub &e) : Bxp(get_id(e.evalmax)), pf(e.pf),
-                                                        pu(e.pu), evalmax(e.evalmax) {
+BxpMinMaxSub::BxpMinMaxSub(const BxpMinMaxSub &e) : Bxp(get_id(e.evalmax)), maxfxy(e.maxfxy),
+		feasible(e.feasible), evalmax(e.evalmax) {
 
-    }
+}
 
-    long BxpMinMaxSub::get_id(const EvalMax& evalmax) {
-        try {
-            return ids()[evalmax.id];
-        } catch(Map<long,long,false>::NotFound&) {
-            long new_id=next_id();
-            ids().insert_new(evalmax.id, new_id);
-            return new_id;
-        }
+long BxpMinMaxSub::get_id(const EvalMax& evalmax) {
+	try {
+		return ids()[evalmax.id];
+	} catch(Map<long,long,false>::NotFound&) {
+		long new_id=next_id();
+		ids().insert_new(evalmax.id, new_id);
+		return new_id;
+	}
 
-    }
+}
 
 //long BxpMinMax::get_id() {
-//    auto *pBxpOpti = dynamic_cast<BxpMinMaxOpti*>(this);
-//    if (pBxpOpti)
-//        return BxpMinMaxOpti::id;
-//    else
-//        return BxpMinMaxCsp::id;
-//}
+	//    auto *pBxpOpti = dynamic_cast<BxpMinMaxOpti*>(this);
+	//    if (pBxpOpti)
+		//        return BxpMinMaxOpti::id;
+	//    else
+		//        return BxpMinMaxCsp::id;
+	//}
 
 
 //    long BxpMinMaxOpti::get_id(const NormalizedSystem& sys) {

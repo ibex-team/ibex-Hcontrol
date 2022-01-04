@@ -8,13 +8,12 @@ using namespace ibex;
 
 int main (int argc, char *argv[]) {
 
-    double x_prec = 1e-6;
     double y_prec = 1e-4;
     double stop_prec = 1e-2;
 
     Variable x(1), y(1);
     IntervalVector x_ini(1,Interval(-20,20));
-    IntervalVector y_ini(1,Interval(10,20));
+    IntervalVector y_ini(1,Interval(-20,20));
     Function func(x,y,(pow(x,2)-pow(y,2)));
 
     SystemFactory x_fac;
@@ -30,10 +29,27 @@ int main (int argc, char *argv[]) {
     CtcIdentity xy_ctc(x_ini.size()+y_ini.size());
 
     EvalMax ex1(y_ini,xy_sys, xy_ctc);
-    ex1.timeout = 100;
-  //  ex1.prec_y = y_prec;
-    Interval res = ex1.eval(x_sys.box);
-    cout << "result: " << res << endl;
+    ex1.set_timeout(100);
+    ex1.set_monitor(true);
+    ex1.set_nb_iter(30);
+   // ex1.set_visit_all(true);
+    ex1.set_prec_y(y_prec);
+    ex1.set_prec_y(0);
+    ex1.set_goal_rel_prec(stop_prec);
+
+    Cell x_cell(x_sys.box);
+    Interval res1 = ex1.eval(x_cell.box,x_cell.prop);
+    cout << "result: " << res1 << endl;
+
+    LargestFirst bsc;
+
+    std::pair<Cell*,Cell*> subcells_pair = bsc.bisect(x_cell);
+
+    Interval res2 = ex1.eval(subcells_pair.first->box,subcells_pair.first->prop);
+    cout << subcells_pair.first->box <<"  result: " << res2 << endl;
+
+    Interval res3 = ex1.eval(subcells_pair.second->box,subcells_pair.second->prop);
+    cout << subcells_pair.second->box <<"  result: " << res3 << endl;
 
     return 0;
 }

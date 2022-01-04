@@ -5,6 +5,12 @@ set (IBEX_HCONTROL_DESCRIPTION "H_infinity Control synthesis using global optimi
 set (IBEX_HCONTROL_URL "https://github.com/ibex-team/ibex-Hcontrol/")
 set (IBEX_MIN_VERSION_REQ 2.8.9.1)
 
+
+set(CMAKE_CXX_FLAGS_DEBUG "-Wall")
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+
 # If IBEX_DIR was given on the command-line and not in the environment, set it
 # as an environment variable. Enable the usage of 'cmake -DIBEX_DIR=<path> ...'
 if (NOT DEFINED ENV{IBEX_DIR} AND DEFINED IBEX_DIR)

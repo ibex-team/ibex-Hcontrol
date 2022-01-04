@@ -20,7 +20,7 @@ class feasible_point {
 public:
 	feasible_point(const Vector& point,const Interval& eval);
 	feasible_point(const feasible_point& pt);
-	~feasible_point();
+	~feasible_point() {}
 
 	Vector point;
 	Interval eval;

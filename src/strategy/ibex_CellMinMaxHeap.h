@@ -57,14 +57,14 @@ public:
 	 *
 	 * Image of the objective on the current box
 	 */
-	Interval pf;
+	Interval maxfxy;
 
 	/**
 	 * \brief to know if  all constraints are satisfed
 	 *
-	 * Constraint factor of the current box : between 0 infeasible and 1 for all constraints satisfied.
+	 * 0 unknown and 1 feasible i.e. all constraints satisfied.
 	 */
-	double pu;
+	bool feasible;
 
 protected:
 
@@ -260,7 +260,7 @@ inline void CellCostMaxPFub_MinMax::add_property(BoxProperties& map) {
 inline double CellCostMaxPFub_MinMax::cost(const Cell& c) const {
 	const BxpMinMaxSub *data = (BxpMinMaxSub*) c.prop[BxpMinMaxSub::get_id(evalmax)];
 	if (data) {
-		return -data->pf.ub();
+		return -data->maxfxy.ub();
 	} else {
 		ibex_error("CellCostMaxPFub_MinMax::cost : invalid cost");
 		return POS_INFINITY;
@@ -283,7 +283,7 @@ inline void CellCostPFlb_MinMax::add_property(BoxProperties& map) {
 inline double CellCostPFlb_MinMax::cost(const Cell& c) const {
 	const BxpMinMaxSub *data = (BxpMinMaxSub*) c.prop[BxpMinMaxSub::get_id(evalmax)];
 	if (data) {
-		return  data->pf.lb();
+		return  data->maxfxy.lb();
 	} else {
 		ibex_error("CellCostPFlb_MinMax::cost : invalid cost"); return POS_INFINITY;
 	}
