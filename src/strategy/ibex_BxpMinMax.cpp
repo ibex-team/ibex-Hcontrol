@@ -23,17 +23,17 @@ Map<long,long,false>& BxpMinMaxSub::ids() {
 
 
 BxpMinMax::BxpMinMax(EvalMax& evalmax, int crit_heap) : Bxp(BxpMinMax::get_id(evalmax)),
-		best_sol(NULL),
+		best_sol(evalmax.get_size()),
 		y_heap(evalmax,crit_heap),
 		nb_bisect(0),
 		pu(0),
-		evalmax(evalmax) {
-
+		evalmax(evalmax)
+{
+	best_sol.set_empty();
 }
 
 BxpMinMax::~BxpMinMax() {
 	y_heap.flush();
-	delete best_sol;
 }
 
 
@@ -67,17 +67,12 @@ void BxpMinMax::clear_notin_point(const IntervalVector &x_box, bool strong_del) 
 
 BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(get_id(e.evalmax)),
 		fmax(e.fmax),
-		best_sol(NULL),
+		best_sol(e.best_sol),
 		y_heap(e.y_heap,true),
 		nb_bisect(e.nb_bisect+1),
 		pu(e.pu),
-		evalmax(e.evalmax)
- {
-	if (!e.best_sol) {
-		best_sol = new IntervalVector(*e.best_sol);
-	}
+		evalmax(e.evalmax) { }
 
-}
 
 long BxpMinMax::get_id(const EvalMax& evalmax) {
 	try {

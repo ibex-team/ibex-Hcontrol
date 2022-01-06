@@ -26,21 +26,15 @@ namespace ibex {
 class BxpMinMax;
 class BxpMinMaxSub;
 
-class EvalMax  {
+class EvalMax : protected Memory {
 
 public:
 
 	/* Constructor without constraint on y */
-	//        EvalMax(IntervalVector& y_box_init, Function& fxy); TODO
+	EvalMax(IntervalVector& y_box_init, Function& fxy);
 
 	/* Constructor with constraint */
 	EvalMax(IntervalVector& y_box_init, System& xy_sys, Ctc& ctc_xy);
-
-	/* Constructor*/
-	//    EvalMax(NormalizedSystem& y_sys,Ctc& ctc_xy,UnconstrainedLocalSearch* local_solver,bool csp_actif = false);
-
-	/* Constructor*/
-	//    EvalMax(NormalizedSystem& y_sys);
 
 	/* Destructor */
 	~EvalMax();
@@ -59,8 +53,6 @@ public:
 	 * */
 	Interval eval(const IntervalVector& X, double loup = POS_INFINITY);
 	Interval eval(const IntervalVector& X, BoxProperties& prop, double loup = POS_INFINITY);
-	//Interval eval(Cell& X, double loup = POS_INFINITY);
-
 
 	/**
 	 * Allows to add the properties data required
@@ -68,8 +60,7 @@ public:
 	 */
 	void add_property(const IntervalVector& init_box, BoxProperties& map);
 
-
-
+	int get_size() const;
 	const IntervalVector& get_best_point_eval() const;
 	double get_goal_abs_prec() const;
 	void set_goal_abs_prec(double goalAbsPrec) ;
@@ -111,26 +102,27 @@ private:
 	bool monitor;
 	int local_search_iter;
 	bool visit_all;
-	System& xy_sys; // contains constraints on x and y
+
 	double goal_abs_prec; // absolute precision on goal evaluation, stop maximization when reached
 	double goal_rel_prec; // absolute precision on goal evaluation, stop maximization when reached
 
+	System* xy_sys; // contains constraints on x and y
 
+	Ctc* ctc_xy; //contractor for constraints on xy
 
-	//        Affine2Eval* affine_goal;
-	Ctc& ctc_xy; //contractor for constraints on xy
-    Function* minus_goal_y_at_x; // goal function f becomes -f to solve a minimization problem over y at a fixed x
+	Function* minus_goal_y_at_x; // goal function f becomes -f to solve a minimization problem over y at a fixed x
 	UnconstrainedLocalSearch *local_solver;
-	//double abs_min_prec; // absolute minimum prec bisection on y
-	Bsc* bsc; // bisector
-	std::vector<Cell*> heap_save;
-	bool found_point;
-	double time;
-	//bool csp_actif;
-	//IntervalVector best_point_eval;
 
+	Bsc* bsc; // bisector
+
+	std::vector<Cell*> heap_save;
+
+	bool found_point;
+
+	double time;
 
 	IntervalVector y_box_init;
+
 	int crit_heap;
 
 	double save_heap_ub;
@@ -240,7 +232,11 @@ inline double EvalMax::get_prec_y() const {
 }
 
 inline void EvalMax::set_prec_y(double precY) {
-	prec_y = precY;
+	if (precY>default_prec_y) {
+		prec_y = precY;
+	} else {
+		prec_y = default_prec_y;
+	}
 }
 
 inline double EvalMax::get_time() const {
@@ -275,7 +271,9 @@ inline const IntervalVector& EvalMax::get_y_box_init() const {
 	return y_box_init;
 }
 
-
+inline int EvalMax::get_size() const {
+	return xy_sys->box.size();
+}
 
 
 } // end namespace ibex

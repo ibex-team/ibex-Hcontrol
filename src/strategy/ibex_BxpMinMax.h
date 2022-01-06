@@ -53,7 +53,6 @@ public:
 	 */
 	void clear_notin_point(const IntervalVector& x_box, bool strong_del);
 
-
 	/**
 	 * \brief Create a copy.
 	 */
@@ -69,7 +68,7 @@ public:
 	 * Enclosure of maximum of the objective function
 	 */
 	Interval fmax;
-	IntervalVector *best_sol;
+	IntervalVector best_sol;
 
 	/**
 	 * y_heap inherited from father of box
@@ -139,18 +138,6 @@ inline void BxpMinMax::update(const BoxEvent& event, const BoxProperties& prop) 
 	// This is actually done from the CellCostFunc classes
 	// and makes no problem so far as this property is not used elsewhere.
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

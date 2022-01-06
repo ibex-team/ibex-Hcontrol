@@ -31,7 +31,7 @@ int main (int argc, char *argv[]) {
     EvalMax ex1(y_ini,xy_sys, xy_ctc);
     ex1.set_timeout(100);
     ex1.set_monitor(true);
-    ex1.set_nb_iter(30);
+    ex1.set_nb_iter(100000);
    // ex1.set_visit_all(true);
     ex1.set_prec_y(y_prec);
     ex1.set_prec_y(0);
