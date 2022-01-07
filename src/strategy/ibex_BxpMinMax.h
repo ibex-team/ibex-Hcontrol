@@ -10,11 +10,13 @@
 #include "ibex_Cell.h"
 #include "ibex_DoubleHeap.h"
 #include "ibex_CellCostFunc.h"
-#include "ibex_EvalMax.h"
-#include "ibex_CellMinMaxHeap.h"
+#include "ibex_CellFuncMinMax.h"
+#include "ibex_CellHeapMinMax.h"
+//#include "ibex_EvalMax.h"
 
 namespace ibex {
 class EvalMax;
+//class CellMinMaxHeap;
 
 class feasible_point {
 public:
@@ -36,7 +38,7 @@ public:
 	/**
 	 * \brief Constructor for the root node (followed by a call to init_root)
 	 */
-	explicit BxpMinMax(EvalMax& evalmax, int crit_heap);
+	explicit BxpMinMax(const EvalMax& evalmax);
 
 	/**
 	 * \brief Delete *this
@@ -73,7 +75,7 @@ public:
 	/**
 	 * y_heap inherited from father of box
 	 */
-	CellMinMaxHeap y_heap;
+	CellHeapMinMax y_heap;
 
 	std::vector<feasible_point> fsbl_pt_list;
 	long int nb_bisect;
@@ -103,29 +105,6 @@ protected:
 };
 
 
-//    /* Inherited classes from DataMinMax */
-//
-//    class BxpMinMaxOpti : public BxpMinMax {
-//    public:
-//        explicit BxpMinMaxOpti(ExtendedSystem& sys) : BxpMinMax() {}
-//        static long get_id(const NormalizedSystem& sys);
-//
-//
-//    protected:
-//        static Map<long, long, false> &ids();
-//        Bxp* copy() const {return new BxpMinMaxOpti(*this);};
-//    };
-//
-//    class BxpMinMaxCsp : public BxpMinMax {
-//    public:
-//        explicit BxpMinMaxCsp(ExtendedSystem& sys) : BxpMinMax(sys) {}
-//        static long get_id(const NormalizedSystem& sys);
-//
-//    protected:
-//        Bxp* copy() const {return new BxpMinMaxCsp(*this);};
-//        static Map<long, long, false> &ids();
-//    };
-
 /*================================== inline implementations ========================================*/
 
 inline Bxp* BxpMinMax::copy(const IntervalVector& box, const BoxProperties& prop) const {
@@ -133,14 +112,8 @@ inline Bxp* BxpMinMax::copy(const IntervalVector& box, const BoxProperties& prop
 }
 
 inline void BxpMinMax::update(const BoxEvent& event, const BoxProperties& prop) {
-	// TODO: we should call compute_pf and compute_pu here or create some
-	// "is_up_to_date" flag.
-	// This is actually done from the CellCostFunc classes
-	// and makes no problem so far as this property is not used elsewhere.
+
 }
-
-
-
 
 
 

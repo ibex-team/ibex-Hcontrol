@@ -2,11 +2,14 @@
 # First example: compiling a library that depends on libibex
 ################################################################################
 # source files of libibex-Hcontrol
-list (APPEND SRC	strategy/ibex_CellMinMaxHeap.h
-       				strategy/ibex_EvalMax.cpp
-       				strategy/ibex_EvalMax.h
-       				strategy/ibex_BxpMinMax.cpp
+list (APPEND SRC	strategy/ibex_CellFuncMinMax.h
+       				strategy/ibex_CellFuncMinMax.cpp
+					strategy/ibex_CellHeapMinMax.h
+					strategy/ibex_CellHeapMinMax.cpp
        				strategy/ibex_BxpMinMax.h
+       				strategy/ibex_BxpMinMax.cpp
+       				strategy/ibex_EvalMax.h
+       				strategy/ibex_EvalMax.cpp
         # Add more source files here.
         # For most plugins, the rest can be left as is.
         )

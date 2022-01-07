@@ -3,6 +3,7 @@
 //
 
 #include "ibex_BxpMinMax.h"
+#include "ibex_EvalMax.h"
 
 namespace ibex {
 
@@ -22,9 +23,9 @@ Map<long,long,false>& BxpMinMaxSub::ids() {
 }
 
 
-BxpMinMax::BxpMinMax(EvalMax& evalmax, int crit_heap) : Bxp(BxpMinMax::get_id(evalmax)),
+BxpMinMax::BxpMinMax(const EvalMax& evalmax) : Bxp(BxpMinMax::get_id(evalmax)),
 		best_sol(evalmax.get_size()),
-		y_heap(evalmax,crit_heap),
+		y_heap(evalmax),
 		nb_bisect(0),
 		pu(0),
 		evalmax(evalmax)
@@ -33,6 +34,7 @@ BxpMinMax::BxpMinMax(EvalMax& evalmax, int crit_heap) : Bxp(BxpMinMax::get_id(ev
 }
 
 BxpMinMax::~BxpMinMax() {
+	fsbl_pt_list.clear();
 	y_heap.flush();
 }
 
@@ -84,30 +86,6 @@ long BxpMinMax::get_id(const EvalMax& evalmax) {
 	}
 }
 
-
-
-BxpMinMaxSub::BxpMinMaxSub(const EvalMax& evalmax) : Bxp(BxpMinMaxSub::get_id(evalmax)),maxfxy(Interval::all_reals()), feasible(0), evalmax(evalmax) {
-
-}
-
-BxpMinMaxSub::~BxpMinMaxSub() = default;
-
-
-BxpMinMaxSub::BxpMinMaxSub(const BxpMinMaxSub &e) : Bxp(get_id(e.evalmax)), maxfxy(e.maxfxy),
-		feasible(e.feasible), evalmax(e.evalmax) {
-
-}
-
-long BxpMinMaxSub::get_id(const EvalMax& evalmax) {
-	try {
-		return ids()[evalmax.id];
-	} catch(Map<long,long,false>::NotFound&) {
-		long new_id=next_id();
-		ids().insert_new(evalmax.id, new_id);
-		return new_id;
-	}
-
-}
 
 //long BxpMinMax::get_id() {
 	//    auto *pBxpOpti = dynamic_cast<BxpMinMaxOpti*>(this);

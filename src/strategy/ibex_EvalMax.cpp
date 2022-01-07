@@ -48,6 +48,8 @@ EvalMax::EvalMax(IntervalVector& y_box_init, Function &fxy)  :
 		time(0),
 		y_box_init(y_box_init),
 		crit_heap(default_prob_heap),
+		cost1(new CellCostMaxPFub_MinMax(*this)),
+		cost2(new CellCostPFlb_MinMax(*this)),
 		save_heap_ub(NEG_INFINITY)
 {
 	SystemFactory fac;
@@ -99,6 +101,8 @@ EvalMax::EvalMax(IntervalVector& y_box_init, System &xy_sys, Ctc &ctc_xy) :
 		time(0),
 		y_box_init(y_box_init),
 		crit_heap(default_prob_heap),
+		cost1(new CellCostMaxPFub_MinMax(*this)),
+		cost2(new CellCostPFlb_MinMax(*this)),
 		save_heap_ub(NEG_INFINITY)
 {
 	if ((xy_sys.goal !=NULL)|| (y_box_init.size()<xy_sys.box.size()) ) {
@@ -125,13 +129,15 @@ EvalMax::~EvalMax() {
 	delete bsc;
     delete local_solver;
     delete minus_goal_y_at_x;
+    delete cost1;
+    delete cost2;
 	delete_save_heap();
 }
 
 void EvalMax::add_property(const IntervalVector& init_box, BoxProperties& map) {
 
 	if (!map[BxpMinMax::get_id(*this)]) {
-		BxpMinMax* data_x= new BxpMinMax(*this, crit_heap);
+		BxpMinMax* data_x= new BxpMinMax(*this);
 
 		Cell * y_cell = new Cell(y_box_init);
 
@@ -197,7 +203,7 @@ bool EvalMax::optimize(const IntervalVector &x_box, BoxProperties &x_prop, doubl
 //	std::cout<<"initial fmax: "<<data_x->fmax<<std::endl;
 //	std::cout<<"box: "<<x_box<<std::endl;
 
-	CellMinMaxHeap& y_heap = data_x->y_heap; // current cell
+	CellHeapMinMax& y_heap = data_x->y_heap; // current cell
 
 	// Define the TimeOut of to compute the bounds of x_box
 	Timer timer;

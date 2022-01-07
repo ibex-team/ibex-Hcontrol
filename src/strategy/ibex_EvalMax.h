@@ -17,14 +17,20 @@
 #include "ibex_NormalizedSystem.h"
 #include "ibex_UnconstrainedLocalSearch.h"
 #include "ibex_LargestFirst.h"
-#include "ibex_BxpMinMax.h"
 #include "ibex_ContractContext.h"
+#include "ibex_CellFuncMinMax.h"
+//#include "ibex_CellMinMaxHeap.h"
+#include "ibex_BxpMinMax.h"
 
 //#include "ibex-affine/ibex_AffineEval.h"
 
 namespace ibex {
-class BxpMinMax;
-class BxpMinMaxSub;
+//class BxpMinMax;
+//class BxpMinMaxSub;
+class CellHeapMinMax;
+//class CellCostMaxPFub_MinMax ;
+//class CellCostPFlb_MinMax;
+
 
 class EvalMax : protected Memory {
 
@@ -123,7 +129,11 @@ private:
 
 	IntervalVector y_box_init;
 
+	// To create the y_heap of every BxpMinMax
+	friend class CellHeapMinMax;
 	int crit_heap;
+	CellCostMaxPFub_MinMax* cost1;
+	CellCostPFlb_MinMax* cost2;
 
 	double save_heap_ub;
 
