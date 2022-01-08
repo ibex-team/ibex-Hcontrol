@@ -19,17 +19,11 @@
 #include "ibex_LargestFirst.h"
 #include "ibex_ContractContext.h"
 #include "ibex_CellFuncMinMax.h"
-//#include "ibex_CellMinMaxHeap.h"
+#include "ibex_CellHeapMinMax.h"
 #include "ibex_BxpMinMax.h"
 
-//#include "ibex-affine/ibex_AffineEval.h"
 
 namespace ibex {
-//class BxpMinMax;
-//class BxpMinMaxSub;
-class CellHeapMinMax;
-//class CellCostMaxPFub_MinMax ;
-//class CellCostPFlb_MinMax;
 
 
 class EvalMax : protected Memory {

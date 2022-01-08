@@ -16,7 +16,6 @@
 
 namespace ibex {
 class EvalMax;
-//class CellMinMaxHeap;
 
 class feasible_point {
 public:

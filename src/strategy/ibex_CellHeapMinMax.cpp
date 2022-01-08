@@ -9,7 +9,6 @@
 
 
 #include "ibex_CellHeapMinMax.h"
-
 #include "ibex_EvalMax.h"
 
 namespace ibex {
