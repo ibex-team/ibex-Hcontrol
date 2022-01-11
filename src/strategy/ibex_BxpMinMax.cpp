@@ -24,16 +24,15 @@ Map<long,long,false>& BxpMinMaxSub::ids() {
 
 
 BxpMinMax::BxpMinMax(const EvalMax& evalmax) : Bxp(BxpMinMax::get_id(evalmax)),
-		best_sol(evalmax.get_size()),
+		fmax(Interval::all_reals()),
+		best_y_point(NULL),
 		y_heap(evalmax),
 		nb_bisect(0),
 		pu(0),
-		evalmax(evalmax)
-{
-	best_sol.set_empty();
-}
+		evalmax(evalmax)  { }
 
 BxpMinMax::~BxpMinMax() {
+	if (best_y_point) delete best_y_point;
 	fsbl_pt_list.clear();
 	y_heap.flush();
 }
@@ -69,11 +68,14 @@ void BxpMinMax::clear_notin_point(const IntervalVector &x_box, bool strong_del) 
 
 BxpMinMax::BxpMinMax(const BxpMinMax &e) : Bxp(get_id(e.evalmax)),
 		fmax(e.fmax),
-		best_sol(e.best_sol),
+		best_y_point(NULL),
 		y_heap(e.y_heap,true),
 		nb_bisect(e.nb_bisect+1),
 		pu(e.pu),
-		evalmax(e.evalmax) { }
+		evalmax(e.evalmax) {
+	if (e.best_y_point)
+		best_y_point = new Vector(*(e.best_y_point));
+}
 
 
 long BxpMinMax::get_id(const EvalMax& evalmax) {
@@ -87,13 +89,6 @@ long BxpMinMax::get_id(const EvalMax& evalmax) {
 }
 
 
-//long BxpMinMax::get_id() {
-	//    auto *pBxpOpti = dynamic_cast<BxpMinMaxOpti*>(this);
-	//    if (pBxpOpti)
-		//        return BxpMinMaxOpti::id;
-	//    else
-		//        return BxpMinMaxCsp::id;
-	//}
 
 
 //    long BxpMinMaxOpti::get_id(const NormalizedSystem& sys) {

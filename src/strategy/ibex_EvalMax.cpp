@@ -428,20 +428,23 @@ bool EvalMax::handle_cell(const IntervalVector& x_box, BxpMinMax* data_x , Cell*
 
 	//************** mid point test and  local optim test point  *****************
 	// To improve the lower bound of fmax
-	std::pair<double , IntervalVector >  res = get_best_lb(x_box,y_cell->box, data_y->feasible);
+	std::pair<double , Vector >  res = get_best_lb(x_box,y_cell->box, data_y->feasible);
 	double best_lb = res.first;
 
-	if (best_lb > data_y->maxfxy.lb()) {
+	if (data_y->maxfxy.lb() < best_lb) {
 		data_y->maxfxy &= Interval(best_lb,POS_INFINITY);
 	}
 	if (data_x->fmax.lb() < best_lb) {
-		//  data_x->best_sol = mid_y_box.mid();
 		found_point = true;
 		data_x->fmax &= Interval(best_lb,POS_INFINITY);; // yes we found a feasible solution for all x
-		data_x->best_sol = res.second;
+		if (data_x->best_y_point) {
+			data_x->best_y_point->put(0, res.second);
+		} else {
+			data_x->best_y_point = new Vector(res.second);
+		}
 	}
 
-	if ( data_x->fmax.is_empty() || (best_lb > data_x->fmax.ub())) {
+	if ( data_x->fmax.is_empty() || (data_x->fmax.ub() < best_lb)) {
 		ibex_error("[ibex_EvalMax] -- error, lb >ub from local search. Please report this bug.");
 	}
 	if (loup < best_lb) {
@@ -510,13 +513,12 @@ bool EvalMax::handle_cell(const IntervalVector& x_box, BxpMinMax* data_x , Cell*
 	// store y_cell
 	if (y_cell->box.max_diam() <= prec_y) {
 //		            std::cout<<"y_cell pushed in heap_save, box: "<<y_cell->box<<" pf: "<<data_y->maxfxy<<" pu: "<<data_y->feasible<<std::endl;
-		save_heap_ub = save_heap_ub<data_y->maxfxy.ub()? data_y->maxfxy.ub() : save_heap_ub;
+		save_heap_ub = (save_heap_ub<data_y->maxfxy.ub()) ? data_y->maxfxy.ub() : save_heap_ub;
 		heap_save.push_back(y_cell);
 	}
 	else {
-		if (!no_stack) {
+		if (!no_stack)
 			data_x->y_heap.push(y_cell);
-		}
 		else
 			heap_save.push_back(y_cell);
 	}
@@ -591,13 +593,12 @@ void EvalMax::handle_ctrfree( IntervalVector& xy_box, IntervalVector& y_box ) {
 
 
 //mid point test and  local optim test : to find a better lower bound of fmax
-std::pair<double, IntervalVector> EvalMax::get_best_lb(const IntervalVector& x_box, const IntervalVector& y_box, bool y_feasible)  {
+std::pair<double, Vector> EvalMax::get_best_lb(const IntervalVector& x_box, const IntervalVector& y_box, bool y_feasible)  {
 	double best_lb= NEG_INFINITY;
 	IntervalVector try_y_point(x_box.size()+y_box.size());
 	try_y_point.put(0,x_box);
 
-	IntervalVector best_point(x_box.size()+y_box.size());
-	best_point.set_empty();
+	Vector best_point(x_box.size()+y_box.size());
 
 	IntervalVector xy_box(x_box.size()+y_box.size());
 	xy_box.put(0,x_box);
@@ -642,11 +643,13 @@ std::pair<double, IntervalVector> EvalMax::get_best_lb(const IntervalVector& x_b
 			Interval midres = xy_sys->goal->eval(try_y_point);
 			if (midres.lb() > best_lb) {
 				best_lb= midres.lb();
-				best_point= try_y_point;
+				for (int i=0; i< y_box.size(); i++) {
+					best_point[i]= try_y_point[y_box.size()+i].mid();
+				}
 			}
 		}
 	}
-	return std::pair<double, IntervalVector>(best_lb,best_point);
+	return std::pair<double, Vector>(best_lb,best_point);
 
 }
 

@@ -42,17 +42,16 @@ public:
 	/* returns an enclosure of the maximum of the objective function: max f(x,y)
 	 * modifies y_heap inherited from father box
 	 * This function works as a classic B&B algorithm, with an initial stack of box instead of a initial box.
-	 * Inputs: -y_heap: heap of cells containing y boxes sorted w.r.t the ub of eval, the top cell has the greatest ub eval.
-	 *         -x_box: current x box, needed to evaluate f(x,y)
-	 *         -objective_function: f
-	 *         -nb_iter: number of times boxes of y_heap are cut
-	 *         -best_max: minimum found for max(f), best current solution
+	 * Inputs: -x_box: current x box, needed to evaluate f(x,y)
+	 *
+	 * if BxpMinMax exist inside the BoxProperties:
+	 *         -y_heap: heap of cells containing y boxes sorted w.r.t the ub of eval, the top cell has the greatest ub eval.
 	 *         -fmax: enclosure of max(f(x_box),y_heap), this result is inherited from early computation with a box containing x_box
 	 *         -min_prec: minimum size of boxes in y_heap
 	 *         -is_midp: true if optimize run with x midpoint eval, false else
 	 * */
-	Interval eval(const IntervalVector& X, double loup = POS_INFINITY);
-	Interval eval(const IntervalVector& X, BoxProperties& prop, double loup = POS_INFINITY);
+	Interval eval(const IntervalVector& x_box, double loup = POS_INFINITY);
+	Interval eval(const IntervalVector& x_box, BoxProperties& prop, double loup = POS_INFINITY);
 
 	/**
 	 * Allows to add the properties data required
@@ -147,11 +146,9 @@ private:
 
 	/**
 	 * run local search algorithm for a particular x and maximizes over y to provide y_max a local maximum.
-	 * Objective function is then evaluate at (x_box,max_y) to try to provide a better lower bound.
-	 * update x_data->fmax  and y_data->pf
+	 *return pair(local bound , best point y found)
 	 */
-	//double local_search_process(const IntervalVector& x_box, const IntervalVector& xy_box, double loup);
-	std::pair<double, IntervalVector> get_best_lb(const IntervalVector& x_box, const IntervalVector& y_box, bool y_feasible);
+	std::pair<double, Vector> get_best_lb(const IntervalVector& x_box, const IntervalVector& y_box, bool y_feasible);
 
 	/**
 	 * return true if the stop criterion is reached

@@ -7,12 +7,12 @@
 
 #include "ibex_Bxp.h"
 #include "ibex_Interval.h"
+#include "ibex_Vector.h"
 #include "ibex_Cell.h"
 #include "ibex_DoubleHeap.h"
 #include "ibex_CellCostFunc.h"
 #include "ibex_CellFuncMinMax.h"
 #include "ibex_CellHeapMinMax.h"
-//#include "ibex_EvalMax.h"
 
 namespace ibex {
 class EvalMax;
@@ -69,7 +69,7 @@ public:
 	 * Enclosure of maximum of the objective function
 	 */
 	Interval fmax;
-	IntervalVector best_sol;
+	Vector* best_y_point;
 
 	/**
 	 * y_heap inherited from father of box
@@ -79,9 +79,6 @@ public:
 	std::vector<feasible_point> fsbl_pt_list;
 	long int nb_bisect;
 
-
-	static long get_id(const EvalMax& evalmax);
-
 	/**
 	 * \brief Casado criterion
 	 *
@@ -89,6 +86,7 @@ public:
 	 */
 	double pu;
 
+	static long get_id(const EvalMax& evalmax);
 protected:
 
 	/**

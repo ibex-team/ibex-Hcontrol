@@ -19,8 +19,6 @@
 
 namespace ibex {
 class EvalMax;
-//class CellCostMaxPFub_MinMax;
-//class CellCostPFlb_MinMax;
 
 /**
  * \ingroup optim
@@ -122,31 +120,13 @@ private:
 /*================================== inline implementations ========================================*/
 
 
-inline CellHeapMinMax::~CellHeapMinMax() {
-	flush();
-}
+inline CellHeapMinMax::~CellHeapMinMax() {flush(); }
 
-inline void CellHeapMinMax::contract(double new_loup) {
-
-	DoubleHeap<Cell>::contract(new_loup);
-}
-
+inline void CellHeapMinMax::contract(double new_loup) { DoubleHeap<Cell>::contract(new_loup);}
 inline void CellHeapMinMax::flush()               { DoubleHeap<Cell>::flush(); }
-
 inline unsigned int CellHeapMinMax::size() const  { return DoubleHeap<Cell>::size(); }
-
 inline bool CellHeapMinMax::empty() const         { return DoubleHeap<Cell>::empty(); }
-
-inline void CellHeapMinMax::push(Cell* cell) {
-	// we know cost1() does not require OptimData
-	//cost2().set_optim_data(*cell); // TODO a verifier qu'on peut l'enlever
-
-	// the cell is put into the 2 heaps
-	DoubleHeap<Cell>::push(cell);
-
-
-}
-
+inline void CellHeapMinMax::push(Cell* cell) 	  {	DoubleHeap<Cell>::push(cell); }
 inline Cell* CellHeapMinMax::pop()                { return DoubleHeap<Cell>::pop(); }
 inline Cell* CellHeapMinMax::top() const          { return DoubleHeap<Cell>::top(); }
 
