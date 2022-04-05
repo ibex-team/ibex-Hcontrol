@@ -43,12 +43,11 @@ void TestEvalMax::ex1() {
 	CtcIdentity xy_ctc(x_ini.size()+y_ini.size());
 
 
-    EvalMax ex1(xy_sys, 1, 1, xy_ctc);
-    ex1.timeout = 100;
-    auto bxpties = BoxProperties(xy_sys.box);
-    bxpties.add(new BxpMinMax(ex1));
-    auto res = ex1.eval(x_sys.box, bxpties, 1000);
-    cout << "result: " << res << " nb_iter = " << ex1.nb_iter << endl;
+    EvalMax ex1(y_ini, xy_sys, xy_ctc);
+    ex1.set_timeout(100);
+    BoxProperties bxpties(xy_sys.box);
+    Interval res = ex1.eval(x_sys.box, bxpties, 1000);
+    cout << "result: " << res << " nb_iter = " << ex1.get_nb_iter() << endl;
 
     CPPUNIT_ASSERT(res.contains(-100)); // TODO
 

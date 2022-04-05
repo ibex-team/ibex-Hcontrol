@@ -32,7 +32,7 @@ EvalMax::EvalMax(IntervalVector& y_box_init, Function &fxy)  :
 		trace(false),
 		timeout(default_timeout),
 		list_elem_max(0),
-		nb_iter(default_iter),
+		max_nb_iter(default_iter),
 		prec_y(default_prec_y),
 		monitor(false),
 		local_search_iter(2),
@@ -40,12 +40,15 @@ EvalMax::EvalMax(IntervalVector& y_box_init, Function &fxy)  :
 		goal_abs_prec(default_goal_abs_prec),
 		goal_rel_prec(default_goal_rel_prec),
 		xy_sys(NULL),
+		nb_var_xy(fxy.nb_var()),
 		ctc_xy(NULL),
-		minus_goal_y_at_x(NULL),
+		goal_xy(NULL),
+		minus_goal_xy(NULL),
 		local_solver(NULL),
 		bsc(new LargestFirst()),
 		found_point(false),
 		time(0),
+		nb_iter(0),
 		y_box_init(y_box_init),
 		crit_heap(default_prob_heap),
 		cost1(new CellCostMaxPFub_MinMax(*this)),
@@ -59,24 +62,16 @@ EvalMax::EvalMax(IntervalVector& y_box_init, Function &fxy)  :
 	xy_sys = &rec(new System(fac));
 	ctc_xy = &rec(new CtcIdentity(xy_sys->box.size()));
 
-	if ( (y_box_init.size()<xy_sys->box.size()) ) {
+	goal_xy = new Function(*(xy_sys->goal), Function::COPY);
 
-		// goal function reformulation as min instead of max for local solver
-		Array<const ExprNode> args(xy_sys->goal->nb_arg());
-		Array<const ExprSymbol> var;
-		for(int i = 0;i<xy_sys->goal->nb_arg();i++) {
-			const ExprSymbol& a = ExprSymbol::new_(xy_sys->goal->arg(i).dim);
-			var.add(a);
-			args.set_ref(i,a);
-		}
-		minus_goal_y_at_x = new Function(var,-(*xy_sys->goal)(args));
+	Array<const ExprSymbol> goal_args(xy_sys->goal->nb_arg());
+	varcopy(xy_sys->goal->args(), goal_args);
+	const ExprNode& goal_expr=ExprCopy().copy(xy_sys->goal->args(), goal_args, xy_sys->goal->expr());
+	minus_goal_xy = new Function(goal_args,-(goal_expr));
 
-		// TODO replace the with a constrained local search (when it will be done)
-		local_solver = new UnconstrainedLocalSearch(*minus_goal_y_at_x,IntervalVector(1));
+	// TODO replace the with a constrained local search (when it will be done)
+	local_solver = new UnconstrainedLocalSearch(*minus_goal_xy,IntervalVector(nb_var_xy));
 
-	} else {
-		ibex_error("[ibex_EvalMax] -- xy_sys must have a goal function.");
-	}
 }
 
 
@@ -85,7 +80,7 @@ EvalMax::EvalMax(IntervalVector& y_box_init, System &xy_sys, Ctc &ctc_xy) :
 		trace(false),
 		timeout(default_timeout),
 		list_elem_max(0),
-		nb_iter(default_iter),
+		max_nb_iter(default_iter),
 		prec_y(default_prec_y),
 		monitor(false),
 		local_search_iter(2),
@@ -93,12 +88,15 @@ EvalMax::EvalMax(IntervalVector& y_box_init, System &xy_sys, Ctc &ctc_xy) :
 		goal_abs_prec(default_goal_abs_prec),
 		goal_rel_prec(default_goal_rel_prec),
 		xy_sys(&xy_sys),
+		nb_var_xy(xy_sys.nb_var),
 		ctc_xy(&ctc_xy),
-		minus_goal_y_at_x(NULL),
+		goal_xy(NULL),
+		minus_goal_xy(NULL),
 		local_solver(NULL),
 		bsc(new LargestFirst()),
 		found_point(false),
 		time(0),
+		nb_iter(0),
 		y_box_init(y_box_init),
 		crit_heap(default_prob_heap),
 		cost1(new CellCostMaxPFub_MinMax(*this)),
@@ -107,18 +105,60 @@ EvalMax::EvalMax(IntervalVector& y_box_init, System &xy_sys, Ctc &ctc_xy) :
 {
 	if ((xy_sys.goal !=NULL)|| (y_box_init.size()<xy_sys.box.size()) ) {
 
-		// goal function reformulation as min instead of max for local solver
-		Array<const ExprNode> args(xy_sys.goal->nb_arg());
-		Array<const ExprSymbol> var;
-		for(int i = 0;i<xy_sys.goal->nb_arg();i++) {
-			const ExprSymbol& a = ExprSymbol::new_(xy_sys.goal->arg(i).dim);
-			var.add(a);
-			args.set_ref(i,a);
-		}
-		minus_goal_y_at_x = new Function(var,-(*xy_sys.goal)(args));
+		ExtendedSystem* ext_sys = dynamic_cast<ExtendedSystem*>(&xy_sys);
 
-		// TODO replace the with a constrained local search (when it will be done)
-		local_solver = new UnconstrainedLocalSearch(*minus_goal_y_at_x,IntervalVector(1));
+		if (ext_sys) {
+
+			ibex_error("[ibex_EvalMax] -- xy_sys must not be an ExtendedSystem.");
+/*
+			nb_var_xy = ext_sys->nb_var-1;
+
+			// goal function reformulation as min instead of max for local solver
+			Array<const ExprSymbol> goal_args(ext_sys->goal->nb_arg()-1);
+			Array<const ExprNode> args2(ext_sys->goal->nb_arg());
+			Array<const ExprSymbol> goal_args0(ext_sys->goal->nb_arg()-1);
+			Array<const ExprNode> args0(ext_sys->goal->nb_arg());
+
+			for(int i = 0;i<ext_sys->goal->nb_arg()-1;i++) {
+				// on ne prend pas la dernière variable de __goal__
+				const ExprSymbol& a = ExprSymbol::new_(ext_sys->goal->arg(i).dim);
+				//var.add(a);
+				goal_args0.set_ref(i,a);
+				args0.set_ref(i,a);
+			}
+			const ExprConstant& a0 = ExprConstant::new_scalar(Interval(0));
+			args0.set_ref((ext_sys->goal->nb_arg()-1),a0);
+
+
+			for(int i = 0;i<ext_sys->goal->nb_arg()-1;i++) {
+				// on ne prend pas la dernière variable de __goal__
+				const ExprSymbol& a = ExprSymbol::new_(ext_sys->goal->arg(i).dim);
+				//var.add(a);
+				goal_args.set_ref(i,a);
+				args2.set_ref(i,a);
+			}
+			const ExprConstant& a = ExprConstant::new_scalar(Interval(0));
+			args2.set_ref((ext_sys->goal->nb_arg()-1),a);
+
+			goal_xy = new Function(goal_args0,(*ext_sys->goal)(args0));
+			minus_goal_xy = new Function(goal_args,-(*ext_sys->goal)(args2));
+
+			// TODO replace the with a constrained local search (when it will be done)
+			local_solver = new UnconstrainedLocalSearch(*minus_goal_xy,IntervalVector(nb_var_xy));
+
+		} else {
+
+			goal_xy = new Function(*xy_sys.goal, Function::COPY);
+
+			Array<const ExprSymbol> goal_args(xy_sys.goal->nb_arg());
+			varcopy(xy_sys.goal->args(), goal_args);
+			const ExprNode& goal_expr=ExprCopy().copy(xy_sys.goal->args(), goal_args, xy_sys.goal->expr());
+			minus_goal_xy = new Function(goal_args,-(goal_expr));
+
+			// TODO replace the with a constrained local search (when it will be done)
+			local_solver = new UnconstrainedLocalSearch(*minus_goal_xy,IntervalVector(nb_var_xy));
+*/
+		}
 
 	} else {
 		ibex_error("[ibex_EvalMax] -- xy_sys must have a goal function.");
@@ -128,7 +168,8 @@ EvalMax::EvalMax(IntervalVector& y_box_init, System &xy_sys, Ctc &ctc_xy) :
 EvalMax::~EvalMax() {
 	delete bsc;
     delete local_solver;
-    delete minus_goal_y_at_x;
+    delete minus_goal_xy;
+    delete goal_xy;
     delete cost1;
     delete cost2;
 	delete_save_heap();
@@ -145,7 +186,7 @@ void EvalMax::add_property(const IntervalVector& init_box, BoxProperties& map) {
 		bsc->add_property(y_cell->box,y_cell->prop);
 		// add data required by the contractor
 		// attention on met dans y_prop des info sur xy_box(init_box|y_box_init) : ctc_xy.add_property(xy_box,y_cell->prop);
-		ctc_xy->add_property(xy_sys->box,y_cell->prop);
+		ctc_xy->add_property(IntervalVector(xy_sys->box.size()),y_cell->prop);
 		// add data required by the buffer
 		data_x->y_heap.add_property(y_cell->box,y_cell->prop);
 		BxpMinMaxSub * data_y = dynamic_cast<BxpMinMaxSub *>(y_cell->prop[BxpMinMaxSub::get_id(*this)]);
@@ -196,7 +237,6 @@ bool EvalMax::optimize(const IntervalVector &x_box, BoxProperties &x_prop, doubl
 	found_point  = false;
 
 	BxpMinMax *data_x = dynamic_cast<BxpMinMax* >(x_prop[BxpMinMax::get_id(*this)]);
-
 //	std::cout <<"    DEB "<<data_x->fmax <<std::endl;
 //	std::cout<<std::endl<<"*************************"<<std::endl;
 //	std::cout<<"get y_heap of size: "<<y_heap.size()<<std::endl;
@@ -208,6 +248,7 @@ bool EvalMax::optimize(const IntervalVector &x_box, BoxProperties &x_prop, doubl
 	// Define the TimeOut of to compute the bounds of x_box
 	Timer timer;
 	timer.start();
+	nb_iter = 0;
 
 	// ********** contract x_box with ctc_xy***************
 	/* ca n' a rien a faire ici. Ce genre de contraction de x_box doit être dans un contracteur
@@ -233,13 +274,13 @@ bool EvalMax::optimize(const IntervalVector &x_box, BoxProperties &x_prop, doubl
 
 	// *********** loop ********************
 	try {
-		int current_iter = 0;
-		while(!stop_crit_reached(current_iter, *data_x) ) {
+		nb_iter = 0;
+		while(!stop_crit_reached( *data_x) ) {
 
 			found_point  = false;
 
 			Cell* y_cell = y_heap.pop(); // we extract an element with critprob probability to take it according to the first crit
-			current_iter++;
+			nb_iter++;
 
 //			     std::cout << *y_cell << std::endl;
 //			     std::cout<<"current_iter: "<<current_iter<<std::endl;
@@ -458,7 +499,7 @@ bool EvalMax::handle_cell(const IntervalVector& x_box, BxpMinMax* data_x , Cell*
 	if (data_y->feasible && (data_x->fmax.ub()>loup) ) {
 		IntervalVector xy_box_mem(xy_box);
 		// std::cout<<"contraction in light solver, init box: "<<mid_y_box<<std::endl;
-		xy_sys->goal->backward(Interval(NEG_INFINITY,loup),xy_box);
+		goal_xy->backward(Interval(NEG_INFINITY,loup),xy_box);
 
 		if(xy_box.is_empty()) {
 			delete y_cell;
@@ -484,7 +525,7 @@ bool EvalMax::handle_cell(const IntervalVector& x_box, BxpMinMax* data_x , Cell*
 
 	// Update the lower and upper bound on y
 	// objective function evaluation
-	Interval tmp_eval_goal = xy_sys->goal->eval(xy_box);
+	Interval tmp_eval_goal = goal_xy->eval(xy_box);
 	if (tmp_eval_goal.ub()>data_y->maxfxy.ub()) {
 		ibex_error("[ibex_EvalMax] -- get worst upper bound, should not happen due to monotonicity of ifunc. ");
 	}
@@ -569,7 +610,7 @@ bool EvalMax::handle_constraint( IntervalVector& xy_box, IntervalVector& y_box, 
 void EvalMax::handle_ctrfree( IntervalVector& xy_box, IntervalVector& y_box ) {
 	//    std::cout<<"init box: "<<*xy_box<<std::endl;
 	IntervalVector grad(xy_box.size());
-	xy_sys->goal->gradient(xy_box,grad);
+	goal_xy->gradient(xy_box,grad);
 	int k =0;
 	for (int i=xy_box.size()-y_box.size(); i<xy_box.size(); i++) {
 		if (grad[i].lb() > 0) {
@@ -640,7 +681,7 @@ std::pair<double, Vector> EvalMax::get_best_lb(const IntervalVector& x_box, cons
 			// found y such as xy constraint is respected
 
 			// x y constraint respected for all x_box and a point y, try_y_point is a candidate for evaluation
-			Interval midres = xy_sys->goal->eval(try_y_point);
+			Interval midres = goal_xy->eval(try_y_point);
 			if (midres.lb() > best_lb) {
 				best_lb= midres.lb();
 				for (int i=0; i< y_box.size(); i++) {
@@ -661,7 +702,8 @@ int EvalMax::check_constraints(const IntervalVector& xy_box) {
 	int out = 2;
 	if (xy_sys->nb_ctr>0) {
 		bool toto= true;
-		IntervalVector res = xy_sys->f_ctrs.eval_vector(xy_box);
+
+		IntervalVector res = xy_sys->f_ctrs.eval_vector(xy_box); //TODO probleme si c'est un ExtendedSystem
 		bool val;
 		for (int c=0; c<xy_sys->f_ctrs.image_dim(); c++) {
 			switch (xy_sys->ops[c]) {
@@ -703,8 +745,8 @@ void EvalMax::delete_save_heap() {
 
 
 
-bool EvalMax::stop_crit_reached(int current_iter, const BxpMinMax& data_x) const {
-	if (nb_iter !=0 && current_iter >= nb_iter)  {// nb_iter ==  0 implies minimum precision required (may be mid point x case)
+bool EvalMax::stop_crit_reached( const BxpMinMax& data_x) const {
+	if (max_nb_iter !=0 && nb_iter >= max_nb_iter)  {// nb_iter ==  0 implies minimum precision required (may be mid point x case)
 //		std::cout<<"STOP: nb_iter max reached"<<std::endl;
 		return true;
 	}

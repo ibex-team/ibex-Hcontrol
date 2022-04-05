@@ -71,11 +71,12 @@ public:
 	void set_local_search_iter(int localSearchIter) ;
 	bool is_monitor() const ;
 	void set_monitor(bool monitor);
-	int get_nb_iter() const ;
-	void set_nb_iter(int nbIter);
+	int get_max_nb_iter() const ;
+	void set_max_nb_iter(int nbIter);
 	double get_prec_y() const ;
 	void set_prec_y(double precY);
 	double get_time() const ;
+	double get_nb_iter() const ;
 	double get_timeout() const;
 	void set_timeout(double timeout);
 	int get_trace() const ;
@@ -96,7 +97,7 @@ private:
 	double timeout;
 	unsigned int  list_elem_max;
 //	double ext_crit_prob;
-	int nb_iter;
+	int max_nb_iter;
 	double prec_y;
 	bool monitor;
 	int local_search_iter;
@@ -106,10 +107,11 @@ private:
 	double goal_rel_prec; // absolute precision on goal evaluation, stop maximization when reached
 
 	System* xy_sys; // contains constraints on x and y
-
+	int nb_var_xy;
 	Ctc* ctc_xy; //contractor for constraints on xy
 
-	Function* minus_goal_y_at_x; // goal function f becomes -f to solve a minimization problem over y at a fixed x
+	Function* goal_xy; // goal function f becomes -f to solve a minimization problem over y at a fixed x
+	Function* minus_goal_xy; // goal function f becomes -f to solve a minimization problem over y at a fixed x
 	UnconstrainedLocalSearch *local_solver;
 
 	Bsc* bsc; // bisector
@@ -119,6 +121,7 @@ private:
 	bool found_point;
 
 	double time;
+	long nb_iter;
 
 	IntervalVector y_box_init;
 
@@ -153,7 +156,7 @@ private:
 	/**
 	 * return true if the stop criterion is reached
 	 */
-	bool stop_crit_reached(int current_iter, const BxpMinMax& data_x) const;
+	bool stop_crit_reached( const BxpMinMax& data_x) const;
 
 	/**
 	 * add elements of Heap_save into y_heap
@@ -220,12 +223,12 @@ inline void EvalMax::set_monitor(bool monitor) {
 	this->monitor = monitor;
 }
 
-inline int EvalMax::get_nb_iter() const {
-	return nb_iter;
+inline int EvalMax::get_max_nb_iter() const {
+	return max_nb_iter;
 }
 
-inline void EvalMax::set_nb_iter(int nbIter) {
-	nb_iter = nbIter;
+inline void EvalMax::set_max_nb_iter(int nbIter) {
+	max_nb_iter = nbIter;
 }
 
 inline double EvalMax::get_prec_y() const {
@@ -242,6 +245,10 @@ inline void EvalMax::set_prec_y(double precY) {
 
 inline double EvalMax::get_time() const {
 	return time;
+}
+
+inline double EvalMax::get_nb_iter() const {
+	return nb_iter;
 }
 
 inline double EvalMax::get_timeout() const {
