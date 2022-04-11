@@ -39,7 +39,7 @@ void TestEvalMax::ex1() {
 	xy_fac.add_var(x, x_ini);
 	xy_fac.add_var(y, y_ini);
 	xy_fac.add_goal(func);
-	ExtendedSystem xy_sys(xy_fac);
+	System xy_sys(xy_fac);
 	CtcIdentity xy_ctc(x_ini.size()+y_ini.size());
 
 

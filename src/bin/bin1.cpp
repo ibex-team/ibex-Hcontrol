@@ -25,7 +25,7 @@ int main (int argc, char *argv[]) {
     xy_fac.add_var(x, x_ini);
     xy_fac.add_var(y, y_ini);
     xy_fac.add_goal(func);
-    ExtendedSystem xy_sys(xy_fac);
+    System xy_sys(xy_fac);
     CtcIdentity xy_ctc(x_ini.size()+y_ini.size());
     cout << xy_sys << endl;
     //EvalMax ex1(y_ini,xy_sys, xy_ctc);

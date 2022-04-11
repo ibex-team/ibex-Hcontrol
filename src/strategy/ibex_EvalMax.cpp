@@ -103,65 +103,16 @@ EvalMax::EvalMax(IntervalVector& y_box_init, System &xy_sys, Ctc &ctc_xy) :
 		cost2(new CellCostPFlb_MinMax(*this)),
 		save_heap_ub(NEG_INFINITY)
 {
-	if ((xy_sys.goal !=NULL)|| (y_box_init.size()<xy_sys.box.size()) ) {
 
-		ExtendedSystem* ext_sys = dynamic_cast<ExtendedSystem*>(&xy_sys);
-
-		if (ext_sys) {
-
-			ibex_error("[ibex_EvalMax] -- xy_sys must not be an ExtendedSystem.");
-/*
-			nb_var_xy = ext_sys->nb_var-1;
-
-			// goal function reformulation as min instead of max for local solver
-			Array<const ExprSymbol> goal_args(ext_sys->goal->nb_arg()-1);
-			Array<const ExprNode> args2(ext_sys->goal->nb_arg());
-			Array<const ExprSymbol> goal_args0(ext_sys->goal->nb_arg()-1);
-			Array<const ExprNode> args0(ext_sys->goal->nb_arg());
-
-			for(int i = 0;i<ext_sys->goal->nb_arg()-1;i++) {
-				// on ne prend pas la dernière variable de __goal__
-				const ExprSymbol& a = ExprSymbol::new_(ext_sys->goal->arg(i).dim);
-				//var.add(a);
-				goal_args0.set_ref(i,a);
-				args0.set_ref(i,a);
-			}
-			const ExprConstant& a0 = ExprConstant::new_scalar(Interval(0));
-			args0.set_ref((ext_sys->goal->nb_arg()-1),a0);
-
-
-			for(int i = 0;i<ext_sys->goal->nb_arg()-1;i++) {
-				// on ne prend pas la dernière variable de __goal__
-				const ExprSymbol& a = ExprSymbol::new_(ext_sys->goal->arg(i).dim);
-				//var.add(a);
-				goal_args.set_ref(i,a);
-				args2.set_ref(i,a);
-			}
-			const ExprConstant& a = ExprConstant::new_scalar(Interval(0));
-			args2.set_ref((ext_sys->goal->nb_arg()-1),a);
-
-			goal_xy = new Function(goal_args0,(*ext_sys->goal)(args0));
-			minus_goal_xy = new Function(goal_args,-(*ext_sys->goal)(args2));
-
-			// TODO replace the with a constrained local search (when it will be done)
-			local_solver = new UnconstrainedLocalSearch(*minus_goal_xy,IntervalVector(nb_var_xy));
-
-		} else {
-
-			goal_xy = new Function(*xy_sys.goal, Function::COPY);
-
-			Array<const ExprSymbol> goal_args(xy_sys.goal->nb_arg());
-			varcopy(xy_sys.goal->args(), goal_args);
-			const ExprNode& goal_expr=ExprCopy().copy(xy_sys.goal->args(), goal_args, xy_sys.goal->expr());
-			minus_goal_xy = new Function(goal_args,-(goal_expr));
-
-			// TODO replace the with a constrained local search (when it will be done)
-			local_solver = new UnconstrainedLocalSearch(*minus_goal_xy,IntervalVector(nb_var_xy));
-*/
-		}
-
-	} else {
+	if ((xy_sys.goal ==NULL)) {
 		ibex_error("[ibex_EvalMax] -- xy_sys must have a goal function.");
+	}
+	if (y_box_init.size()>=xy_sys.box.size())  {
+		ibex_error("[ibex_EvalMax] -- the size of y must be smzller than the size of xy_sys.");
+	}
+	ExtendedSystem* ext_sys = dynamic_cast<ExtendedSystem*>(&xy_sys);
+	if (ext_sys) {
+		ibex_error("[ibex_EvalMax] -- xy_sys must not be an ExtendedSystem.");
 	}
 }
 
@@ -552,16 +503,13 @@ bool EvalMax::handle_cell(const IntervalVector& x_box, BxpMinMax* data_x , Cell*
 
 	//*************************************************
 	// store y_cell
-	if (y_cell->box.max_diam() <= prec_y) {
+	if ((y_cell->box.max_diam() <= prec_y)||(no_stack)) {
 //		            std::cout<<"y_cell pushed in heap_save, box: "<<y_cell->box<<" pf: "<<data_y->maxfxy<<" pu: "<<data_y->feasible<<std::endl;
 		save_heap_ub = (save_heap_ub<data_y->maxfxy.ub()) ? data_y->maxfxy.ub() : save_heap_ub;
 		heap_save.push_back(y_cell);
 	}
 	else {
-		if (!no_stack)
-			data_x->y_heap.push(y_cell);
-		else
-			heap_save.push_back(y_cell);
+		data_x->y_heap.push(y_cell);
 	}
 	return true;
 }
@@ -609,6 +557,7 @@ bool EvalMax::handle_constraint( IntervalVector& xy_box, IntervalVector& y_box, 
 
 void EvalMax::handle_ctrfree( IntervalVector& xy_box, IntervalVector& y_box ) {
 	//    std::cout<<"init box: "<<*xy_box<<std::endl;
+	// ************* Monotonicity test *************
 	IntervalVector grad(xy_box.size());
 	goal_xy->gradient(xy_box,grad);
 	int k =0;
@@ -624,6 +573,7 @@ void EvalMax::handle_ctrfree( IntervalVector& xy_box, IntervalVector& y_box ) {
 		}
 		k++;
 	}
+	//***********************************************
 	//    std::cout<<"final box: "<<*xy_box<<std::endl;
 	//    std::cout<<"free cst contraction done, contracted box: "<<*xy_box<<std::endl;
 }
